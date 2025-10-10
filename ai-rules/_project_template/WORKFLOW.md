@@ -86,12 +86,24 @@ git checkout -b <ブランチ名>
 
 #### ブランチ命名規則
 
+**通常の開発**:
 - `feat-<機能名>`: 新機能追加（例: `feat-user-dashboard`）
 - `fix-<修正内容>`: バグ修正（例: `fix-login-timeout`）
 - `refactor-<対象>`: リファクタリング（例: `refactor-api-error-handling`）
 - `docs-<内容>`: ドキュメント更新（例: `docs-api-specification`）
 
-⚠️ **重要**: mainブランチでの直接作業は絶対禁止
+**改善系**:
+- `enhance-<機能名>`: 既存機能の改善（例: `enhance-search-performance`）
+- `perf-<対象>`: パフォーマンス改善（例: `perf-database-query`）
+- `ui-<対象>`: UI/UX改善（例: `ui-button-feedback`）
+
+**緊急対応**（特別なフロー）:
+- `hotfix-<バグの簡潔な説明>`: 本番緊急修正（例: `hotfix-login-500-error`）
+  - 詳細: [HOTFIX.md](./HOTFIX.md)
+  - main ブランチから直接作成
+  - 最優先で対応
+
+⚠️ **重要**: mainブランチでの直接作業は絶対禁止（hotfix を除く）
 
 ---
 
