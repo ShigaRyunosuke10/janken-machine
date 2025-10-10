@@ -23,7 +23,129 @@
 
 ---
 
+## プロジェクトの状態判定
+
+⚠️ **このテンプレートは新規プロジェクト・既存プロジェクトの両方に対応しています**
+
+### 新規プロジェクトの場合
+
+以下に該当する場合は新規プロジェクトです：
+- `{{PROJECT_NAME}}` などのプレースホルダーが残っている
+- `reference/` フォルダが空または初期状態
+- Serenaメモリが未初期化
+- 技術スタックが未定義
+
+→ [新規プロジェクト立ち上げ手順](#新規プロジェクト立ち上げ手順) へ進む
+
+### 既存プロジェクトの場合
+
+以下に該当する場合は既存プロジェクトです：
+- CLAUDE.mdのプレースホルダーが設定済み
+- Serenaメモリに過去のセッション情報がある
+- `docs/` や `reference/` に資料がある
+
+→ [セッション開始時の必須手順](#セッション開始時の必須手順) へ進む
+
+---
+
+## 新規プロジェクト立ち上げ手順
+
+⚠️ **新規プロジェクトの場合のみ、この手順を実施してください**
+
+詳細: [ai-rules/_project_template/PROJECT_INITIALIZATION.md](ai-rules/_project_template/PROJECT_INITIALIZATION.md)
+
+### 全体フロー
+
+```
+[Phase 0: プロジェクト企画]
+    ↓
+[Phase 1: 初期設定]
+    ↓
+[Phase 2: 環境構築]
+    ↓
+[Phase 3: 開発フェーズ] ← 通常のワークフロー開始
+```
+
+### Phase 0: プロジェクト企画（ユーザー主導）
+
+1. **作りたいものを決める**
+   - アプリケーションの目的・用途
+   - 主要な機能リスト
+   - ターゲットユーザー
+
+2. **参考資料の準備**
+   - 仕様書・要件定義書（PDF、Excel等）
+   - ワイヤーフレーム・デザイン（画像）
+   - ER図・データモデル
+   - 外部API仕様書
+   - サンプルデータ（CSV、JSON等）
+
+   → `reference/` フォルダに配置
+
+3. **技術スタックの選定**
+   - フロントエンド（React, Vue, Svelte等）
+   - バックエンド（FastAPI, Express, Django等）
+   - データベース（PostgreSQL, MySQL, MongoDB等）
+
+### Phase 1: 初期設定（AI支援）
+
+```bash
+# 1. 参考資料の確認
+ls reference/
+
+# 2. CLAUDE.mdのプレースホルダー更新
+# AI: ユーザーにヒアリングして以下を設定
+# - {{PROJECT_NAME}}
+# - {{GITHUB_OWNER}}/{{GITHUB_REPO}}
+# - {{FRONTEND_PORT}}, {{BACKEND_PORT}}
+# - {{TEST_USER_EMAIL}}
+# - 技術スタック
+
+# 3. .mcp.jsonの確認
+# AI: APIキー等の設定が必要な場合はユーザーに確認
+
+# 4. Serenaメモリの初期化
+# AI: 初期状態のメモリファイルを作成
+# - current_issues_and_priorities.md
+# - session_handover.md
+# - phase_progress.md（フェーズ管理時）
+
+# 5. 基本ドキュメントの作成
+# AI: 以下を作成
+# - docs/SETUP.md
+# - docs/PHASES.md（フェーズ管理時）
+# - docs/API.md（空の雛形）
+# - docs/DATABASE.md（空の雛形）
+```
+
+### Phase 2: 環境構築（AI支援）
+
+```bash
+# 1. Dockerセットアップ
+# AI: docker-compose.ymlの作成・設定
+
+# 2. フロントエンド初期化
+# AI: Vite/Next.js/etc のプロジェクト作成
+
+# 3. バックエンド初期化
+# AI: FastAPI/Express/etc のプロジェクト作成
+
+# 4. データベース設定
+# AI: スキーマ定義・マイグレーション
+
+# 5. 開発サーバー起動確認
+docker-compose up -d
+```
+
+### Phase 3: 通常の開発フェーズへ
+
+Phase 2が完了したら、[開発ワークフロー](#開発ワークフロー) に従って開発を進めます。
+
+---
+
 ## セッション開始時の必須手順
+
+⚠️ **既存プロジェクト・Phase 3以降の新規プロジェクトで使用**
 
 ### 1. 参考資料の確認
 
