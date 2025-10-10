@@ -27,16 +27,12 @@ def test_game_flow():
         print("    (Simulating START button press)")
         time.sleep(0.5)
 
-        # 2. カウントダウン + SELECT表示
+        # 2. カウントダウン + SELECT表示（5,4,3,2,1）
         print("\n[2] Countdown + SELECT...")
-        for count in [3, 2, 1]:
+        for count in [5, 4, 3, 2, 1]:
             print(f"    {count}...")
             display.show_choice_prompt_with_countdown(count)
-            time.sleep(0.8)
-
-        # カウントダウン後の待機時間（2秒）
-        print("    Waiting 2 seconds after countdown...")
-        time.sleep(2)
+            time.sleep(1)
 
         # 3. 手選択（画面はそのまま、ボタン入力待ち）
         print("\n[3] Waiting for player selection...")

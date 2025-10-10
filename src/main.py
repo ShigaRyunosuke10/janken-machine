@@ -46,13 +46,10 @@ class JankenGame:
         """カウントダウン + SELECT表示"""
         print("=== Countdown + SELECT ===")
 
-        for count in [3, 2, 1]:
+        for count in [5, 4, 3, 2, 1]:
             print(f"  {count}...")
             self.display.show_choice_prompt_with_countdown(count)
-            time.sleep(0.8)
-
-        # カウントダウン後の待機時間（2秒）
-        time.sleep(2)
+            time.sleep(1)
 
     def player_selection(self):
         """
