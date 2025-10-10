@@ -1,9 +1,9 @@
-# Claude Code Configuration ({{PROJECT_NAME}})
+# Claude Code Configuration (janken-machine)
 
 このファイルは、Claude Codeがこのプロジェクトで作業する際の基本設定とワークフローを定義します。
 
-**プロジェクト名**: {{PROJECT_NAME}}
-**最終更新**: {{CURRENT_DATE}}
+**プロジェクト名**: janken-machine
+**最終更新**: 2025-10-10
 
 ---
 
@@ -46,16 +46,21 @@ mcp__serena__list_memories  # メモリがあるか確認
 ## プロジェクト概要
 
 ### 基本情報
-- **リポジトリ**: {{GITHUB_OWNER}}/{{GITHUB_REPO}}
-- **フロントエンド**: ポート{{FRONTEND_PORT}}
-- **バックエンド**: ポート{{BACKEND_PORT}}
-- **テストユーザー**: {{TEST_USER_EMAIL}}
+- **リポジトリ**: ShigaRyunosuke10/janken-machine
+- **デバイス**: Raspberry Pi 4B
+- **IPアドレス**: 192.168.1.142
+- **SSH接続**: `ssh janken@192.168.1.142`
+- **デプロイ**: なし（Raspberry Pi単体で完結）
 
 ### 技術スタック
-- **フロントエンド**: [記載してください]
-- **バックエンド**: [記載してください]
-- **データベース**: [記載してください]
-- **テスト**: Playwright (E2E)
+- **言語**: Python 3.13
+- **GPIO制御**: gpiozero
+- **LEDマトリックス**: rpi-rgb-led-matrix (hzeller)
+- **フォント描画**: Pillow (PIL)
+- **ハードウェア**:
+  - Raspberry Pi 4B
+  - RGB LEDマトリックスパネル 64×32 × 2枚（上下配置、総解像度 64×64）
+  - ボタン×4（スタート、赤、黄、青）
 
 ---
 
@@ -303,7 +308,7 @@ Read reference/ER図.png
 ```bash
 # 1. プロジェクトをアクティベート
 mcp__serena__activate_project
-  project: "{{PROJECT_NAME}}"
+  project: "janken-machine"
 
 # 2. 利用可能なメモリを確認
 mcp__serena__list_memories
@@ -422,33 +427,28 @@ git status
 
 ### 有効なMCPサーバー
 
-#### Context7
-- **用途**: 最新ライブラリ仕様の取得
-- **使用例**: `@context7 react 19`, `@context7 fastapi`
-
 #### GitHub
 - **用途**: リポジトリ操作
-- **リポジトリ**: {{GITHUB_OWNER}}/{{GITHUB_REPO}}
+- **リポジトリ**: ShigaRyunosuke10/janken-machine
 - **操作**: PR作成、Issue管理、マージ
 
-#### Serena
+#### Serena（オプション）
 - **用途**: コードベース管理とメモリ
-- **プロジェクト**: {{PROJECT_NAME}}
+- **プロジェクト**: janken-machine
+- **代替手段**: `docs/` 配下のローカルファイルで管理
 - **メモリファイル**:
   - `current_issues_and_priorities.md` - Issue・優先度
   - `session_handover.md` - セッション引き継ぎ
-  - `phase_progress.md` - フェーズ進捗（フェーズ管理時）
-  - `database_specifications.md` - DB詳細仕様
-  - `api_specifications.md` - API詳細仕様
+  - `project_initialization_progress.md` - 初期化進捗
+  - `created_files_registry.md` - 作成ファイル管理
 
-#### Playwright
-- **用途**: E2Eテスト実行
-- **テストユーザー**: {{TEST_USER_EMAIL}}
+### 未使用MCPサーバー
 
-#### Netlify
-- **用途**: プロジェクトのビルド・デプロイ・管理
-- **操作**: サイト作成、デプロイ、環境変数設定、アクセス制御
-- **認証**: Netlify Personal Access Token（{{NETLIFY_PAT}}）
+このプロジェクトでは以下のMCPは使用しません（.mcp.jsonのプレースホルダーはそのまま）:
+
+- **Context7**: 最新ライブラリ情報不要（安定版使用）
+- **Playwright**: E2Eテスト不要（物理デバイステスト）
+- **Netlify**: デプロイ先なし（Raspberry Pi単体動作）
 
 詳細: [ai-rules/_project_template/SETUP_AND_MCP.md](ai-rules/_project_template/SETUP_AND_MCP.md)
 
