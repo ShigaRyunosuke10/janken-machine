@@ -34,10 +34,12 @@ def test_game_flow():
             display.show_choice_prompt_with_countdown(count)
             time.sleep(0.8)
 
-        # 3. 手選択画面
+        # カウントダウン後の待機時間（2秒）
+        print("    Waiting 2 seconds after countdown...")
+        time.sleep(2)
+
+        # 3. 手選択（画面はそのまま、ボタン入力待ち）
         print("\n[3] Waiting for player selection...")
-        display.show_choice_prompt()
-        time.sleep(1.5)
 
         # 4. プレイヤー選択（ランダム）
         hands = ['rock', 'scissors', 'paper']

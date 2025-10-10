@@ -51,17 +51,18 @@ class JankenGame:
             self.display.show_choice_prompt_with_countdown(count)
             time.sleep(0.8)
 
+        # カウントダウン後の待機時間（2秒）
+        time.sleep(2)
+
     def player_selection(self):
         """
         プレイヤーの手選択
+        ※ SELECT画面はカウントダウンで既に表示済み
 
         Returns:
             'rock', 'scissors', 'paper'
         """
         print("=== Player selection ===")
-
-        # ディスプレイ: SELECT YOUR HAND（カウントダウンなし）
-        self.display.show_choice_prompt()
 
         # スタートボタンLED点灯
         self.buttons.set_led('start', True)
