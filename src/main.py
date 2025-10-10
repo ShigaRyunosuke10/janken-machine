@@ -42,13 +42,13 @@ class JankenGame:
         print("START button pressed!")
         time.sleep(0.3)
 
-    def countdown(self):
-        """カウントダウン"""
-        print("=== Countdown ===")
+    def countdown_with_choice_prompt(self):
+        """カウントダウン + SELECT表示"""
+        print("=== Countdown + SELECT ===")
 
         for count in [3, 2, 1]:
             print(f"  {count}...")
-            self.display.show_countdown(count)
+            self.display.show_choice_prompt_with_countdown(count)
             time.sleep(0.8)
 
     def player_selection(self):
@@ -60,7 +60,7 @@ class JankenGame:
         """
         print("=== Player selection ===")
 
-        # ディスプレイ: SELECT YOUR HAND
+        # ディスプレイ: SELECT YOUR HAND（カウントダウンなし）
         self.display.show_choice_prompt()
 
         # スタートボタンLED点灯
@@ -189,8 +189,8 @@ class JankenGame:
                 # 1. スタート待機
                 self.wait_for_start()
 
-                # 2. カウントダウン
-                self.countdown()
+                # 2. カウントダウン + SELECT表示
+                self.countdown_with_choice_prompt()
 
                 # 3. プレイヤー手選択
                 player_hand = self.player_selection()

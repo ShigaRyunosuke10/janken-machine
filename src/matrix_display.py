@@ -112,6 +112,21 @@ class MatrixDisplay:
             ("HAND", 14, 45, self.COLOR_WHITE)
         ])
 
+    def show_choice_prompt_with_countdown(self, count: int):
+        """
+        「SELECT」+ カウントダウン表示
+
+        Args:
+            count: カウント数（3, 2, 1）
+        """
+        count_str = str(count)
+        self.draw_multiline_text([
+            ("SELECT", 10, 10, self.COLOR_WHITE),
+            ("YOUR", 14, 25, self.COLOR_WHITE),
+            ("HAND", 14, 40, self.COLOR_WHITE),
+            (count_str, 28, 52, self.COLOR_YELLOW)
+        ])
+
     def show_hand(self, hand: str, is_player: bool = True):
         """
         手（グー・チョキ・パー）を表示
