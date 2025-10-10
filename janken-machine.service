@@ -1,0 +1,19 @@
+[Unit]
+Description=Janken Machine - Rock Paper Scissors Game
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/janken/janken-machine/src
+ExecStart=/usr/bin/python3 /home/janken/janken-machine/src/main.py
+Restart=on-failure
+RestartSec=5s
+StandardOutput=journal
+StandardError=journal
+
+# Environment variables (if needed)
+Environment="PYTHONUNBUFFERED=1"
+
+[Install]
+WantedBy=multi-user.target

@@ -1,522 +1,212 @@
-# Claude Code プロジェクトテンプレート
+# じゃんけんマシン (Janken Machine)
 
-**バージョン**: 2.0  
-**最終更新**: 2025-10-10
+Raspberry Pi 4BとRGB LEDマトリックス、ボタンを使用したイベント展示用じゃんけんゲーム機
 
-## 📋 概要
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Python](https://img.shields.io/badge/python-3.13-blue.svg)
+![Platform](https://img.shields.io/badge/platform-Raspberry%20Pi%204B-red.svg)
 
-Claude Codeを使った開発プロジェクトのテンプレートリポジトリです。このテンプレートをクローンして、**新規プロジェクトの立ち上げ**または**既存プロジェクトへの適用**ができます。
+## 概要
 
-### 🎯 特徴
+このプロジェクトは、Raspberry Pi 4Bを使用したインタラクティブなじゃんけんゲーム機です。64×64のRGB LEDマトリックス（32×64パネル×2枚）と4つのLED内蔵ボタンで、直感的な操作とビジュアル豊かなゲーム体験を提供します。
 
-1. **新規・既存の両対応**: 新規プロジェクト立ち上げ手順と既存プロジェクト運用の両方に対応
-2. **ai-rulesが充実**: 共通ルール11個 + プロジェクト固有8個のテンプレート
-3. **段階的な立ち上げ**: Phase 0（企画）→ Phase 1（初期設定）→ Phase 2（環境構築）→ Phase 3（開発）
-4. **カスタマイズ可能**: プロジェクトに合わせてai-rulesを追加・編集
-5. **サブエージェント完備**: code-reviewer、e2e-tester、docs-updater
+## ハードウェア
 
----
+### 必要な部品
 
-## 🚀 クイックスタート
+- **Raspberry Pi 4B**
+- **RGB LEDマトリックスパネル**: 64×32 P4ピッチ × 2枚（HUB75インターフェース）
+- **外部電源**: 5V 8A（LED用）
+- **LED内蔵ボタン**: 4個
+  - スタートボタン（白）
+  - 赤ボタン（グー）
+  - 黄ボタン（チョキ）
+  - 青ボタン（パー）
+- **microSDカード**: 32GB以上推奨
 
-### プロジェクトタイプを選択
+### GPIO配置
 
-このテンプレートは2つの使い方があります：
+| ボタン名 | 色 | 機能 | 入力GPIO | LED出力GPIO |
+|----------|-----|------|---------|------------|
+| スタートボタン | 白 | ゲーム開始 | GPIO 0 | GPIO 2 |
+| 赤ボタン | 赤 | グー選択 | GPIO 1 | GPIO 3 |
+| 黄ボタン | 黄 | チョキ選択 | GPIO 16 | GPIO 14 |
+| 青ボタン | 青 | パー選択 | GPIO 26 | GPIO 15 |
 
-#### 🆕 新規プロジェクト
+**LEDマトリックス**: HUB75インターフェース（rgbmatrixライブラリのデフォルトピン）
 
-ゼロからプロジェクトを立ち上げる場合
+詳細: [reference/gpio_pinout.md](reference/gpio_pinout.md)
 
-→ [新規プロジェクト立ち上げ手順](#-新規プロジェクト立ち上げ手順) へ
+## 機能
 
-#### 📂 既存プロジェクト
+### ゲームフロー
 
-既に開発が進んでいるプロジェクトにClaude Code環境を導入する場合
+1. **スタート待機**: 「PUSH START」表示、スタートボタンLED点滅
+2. **カウントダウン**: 3, 2, 1のカウントダウン表示
+3. **手選択**: プレイヤーが赤/黄/青ボタンで手を選択（選択ボタンLED点滅）
+4. **CPU選択**: CPUがランダムに手を選択
+5. **勝敗判定**: 勝敗を自動判定
+6. **結果表示**: 対決画面 → 勝敗表示、LED演出
+7. **自動リセット**: 3秒後に次のゲームへ
 
-→ [既存プロジェクトへの適用](#-既存プロジェクトへの適用) へ
+### LED演出
 
----
+- **勝利**: 全LED点滅（5回）
+- **敗北**: スタートボタンLED点滅（3回）
+- **引き分け**: 選択ボタンLED同時点滅（3回）
 
-## 🆕 新規プロジェクト立ち上げ手順
+## インストール
 
-### 1. リポジトリをクローン
+### 1. 環境構築
 
-```bash
-git clone <このリポジトリのURL> my-project
-cd my-project
-```
-
-### 2. MCP設定ファイル編集
-
-**.mcp.json** を編集して、MCPサーバーのAPIキーを設定：
-
-```json
-{
-  "mcpServers": {
-    "context7": {
-      "args": ["--api-key", "your-context7-api-key-here"]
-    },
-    "github": {
-      "headers": {
-        "Authorization": "Bearer your-github-token-here"
-      }
-    }
-  }
-}
-```
-
-**重要**: .mcp.jsonは機密情報を含むため、.gitignoreに追加されています。
-
-### 3. Gitリポジトリ初期化
+詳細な環境構築手順: [docs/SETUP.md](docs/SETUP.md)
 
 ```bash
-# 既存のgit履歴を削除して新規初期化
-rm -rf .git
-git init
-git add .
-git commit -m "chore: initial commit from template"
+# 必要パッケージのインストール
+sudo apt update
+sudo apt install -y python3-dev python3-pip python3-venv python3-gpiozero \
+  libjpeg-dev zlib1g-dev libfreetype6-dev build-essential git cython3
 
-# GitHubリポジトリと接続（事前にGitHub上でリポジトリ作成）
-git remote add origin git@github.com:YourUsername/my-project.git
-git push -u origin main
+# rgbmatrixライブラリのインストール
+cd ~
+git clone https://github.com/hzeller/rpi-rgb-led-matrix.git
+cd rpi-rgb-led-matrix
+make -C lib
+cd bindings/python
+sudo make build-python
+sudo make install-python
+
+# I2C無効化（GPIO 0/1使用のため）
+# /boot/firmware/config.txt で dtparam=i2c_arm=on をコメントアウト
+sudo reboot
 ```
 
-### 4. Claude Codeセッション開始 & テンプレート設定
+### 2. プロジェクトのクローン
 
 ```bash
-# VSCode でプロジェクトを開く
-code .
-
-# Claude Code 拡張機能でセッション開始
+cd ~
+git clone https://github.com/ShigaRyunosuke10/janken-machine.git
+cd janken-machine
 ```
 
-#### 🔹 初回セッション開始プロンプト（重要）
-
-Claude Codeセッションを開始したら、**以下のプロンプトを送信**します。Claude Codeが対話的に質問し、自動的にすべてのテンプレート変数を置換します：
-
-```
-このプロジェクトのテンプレート設定を開始します。
-
-以下の情報を対話形式で1つずつ質問してください。
-回答を受け取ったら、ai-rules/_project_template/、.claude/agents/、docker-compose.yml 内の全ファイルの {{...}} 変数を置換してください：
-
-**プロジェクト情報**:
-1. プロジェクト名（英数字・ハイフン、例: my-webapp）
-2. GitHubオーナー名（例: YourUsername）
-3. GitHubリポジトリ名（通常はプロジェクト名と同じ）
-
-**開発環境**:
-4. フロントエンドポート（デフォルト: 3000、Enterでスキップ可）
-5. バックエンドポート（デフォルト: 8000、Enterでスキップ可）
-6. Docker使用の有無（yes/no、noの場合はdocker-compose.ymlをスキップ）
-
-**テストユーザー**:
-7. テストユーザーメール（例: qa+test@example.com）
-8. テストユーザーパスワード（8文字以上推奨）
-9. テストユーザー名（例: qa_test）
-10. テストユーザーID（UUID形式、Enterで自動生成）
-
-すべての情報を受け取ったら：
-1. ai-rules/_project_template/、.claude/agents/、docker-compose.yml 内の全ファイルの {{...}} を実際の値に一括置換
-2. {{CURRENT_DATE}} は今日の日付（2025-10-10形式）に置換
-3. ai-rules/_project_template を ai-rules/[プロジェクト名] にリネーム
-4. Docker不使用の場合はdocker-compose.ymlを削除
-5. 完了したら「✅ テンプレート設定完了」と報告
-
-⚠️ **注意**: .mcp.jsonのAPIキーは機密情報のため、この対話では扱いません。別途手動で編集してください。
-
-それでは質問を開始してください。
-```
-
-このプロンプトにより、手動での置換作業が不要になります。
-
-### 5. プロジェクト企画を開始
-
-Phase 0（プロジェクト企画）から開始します。詳細は以下を参照：
-
-→ [新規プロジェクト開発フロー](#-新規プロジェクト開発フロー-phase-0-3) へ
-
----
-
-## 📂 既存プロジェクトへの適用
-
-既存プロジェクトにClaude Code環境を導入する手順です。
-
-### 1. このテンプレートから必要なファイルをコピー
+### 3. 自動起動設定（systemdサービス）
 
 ```bash
-# 既存プロジェクトのルートで実行
-cp -r <テンプレートのパス>/.claude .
-cp -r <テンプレートのパス>/ai-rules .
-cp <テンプレートのパス>/CLAUDE.md .
-cp <テンプレートのパス>/.mcp.json .mcp.json.example
+# サービスファイルを配置
+sudo cp janken-machine.service /etc/systemd/system/
+
+# サービスを有効化・起動
+sudo systemctl daemon-reload
+sudo systemctl enable janken-machine.service
+sudo systemctl start janken-machine.service
+
+# 状態確認
+sudo systemctl status janken-machine.service
 ```
 
-### 2. CLAUDE.mdのプレースホルダー更新
+**電源を入れ直すと自動的にゲームが起動します！**
 
-既存プロジェクトの情報に合わせて更新：
+## 使用方法
 
-- `{{PROJECT_NAME}}` → 実際のプロジェクト名
-- `{{GITHUB_OWNER}}/{{GITHUB_REPO}}` → GitHubリポジトリ
-- `{{FRONTEND_PORT}}`, `{{BACKEND_PORT}}` → 実際のポート番号
-- `{{TEST_USER_EMAIL}}` → テストユーザーのメール
-- 技術スタック欄を実際の技術に更新
+### 手動実行
 
-### 3. .mcp.json設定
-
-`.mcp.json.example` をコピーして `.mcp.json` を作成し、APIキーを設定します。
-
-### 4. Serenaメモリの初期化
-
-既存プロジェクトの状態をSerenaメモリに記録します：
-
-```
-> 既存プロジェクトの状態をSerenaメモリに初期化してください。
->
-> 以下の情報を確認して、Serenaメモリファイルを作成してください：
-> 1. 現在の実装状況（どこまで完成しているか）
-> 2. 未解決のIssue
-> 3. 今後の予定
-> 4. データベーススキーマ
-> 5. APIエンドポイント仕様
+```bash
+# メインゲーム実行（sudoが必要）
+sudo python3 ~/janken-machine/src/main.py
 ```
 
-### 5. ドキュメント整備
+### テストプログラム
 
-既存のコードベースを確認して、docs/フォルダに必要なドキュメントを作成します：
+```bash
+# ボタン入力テスト
+python3 ~/janken-machine/src/test_button_input.py
 
-```
-> 既存コードベースを確認し、以下のドキュメントを作成してください：
-> - docs/SETUP.md（環境構築手順）
-> - docs/DATABASE.md（データベーススキーマ）
-> - docs/API.md（APIエンドポイント仕様）
-```
+# ボタンLED出力テスト
+sudo python3 ~/janken-machine/src/test_button_led.py
 
-### 6. 通常の開発ワークフローへ
-
-ドキュメント整備が完了したら、通常の開発ワークフローに従います：
-
-→ [既存プロジェクト開発フロー](#-既存プロジェクト開発フロー) へ
-
----
-
-## 🆕 新規プロジェクト開発フロー (Phase 0-3)
-
-新規プロジェクトは段階的に立ち上げます：
-
-```
-Phase 0: プロジェクト企画（ユーザー主導）
-    ↓
-Phase 1: 初期設定（AI支援）
-    ↓
-Phase 2: 環境構築（AI支援）
-    ↓
-Phase 3: 開発フェーズ（通常のワークフロー）
+# LEDマトリックス表示テスト
+sudo python3 ~/janken-machine/src/test_matrix_display.py
 ```
 
-詳細: [ai-rules/_project_template/PROJECT_INITIALIZATION.md](ai-rules/_project_template/PROJECT_INITIALIZATION.md)
+### サービス管理
 
-### Phase 0: プロジェクト企画（ユーザー主導）
+```bash
+# サービス停止
+sudo systemctl stop janken-machine.service
 
-#### ユーザーが実施すること
+# サービス再起動
+sudo systemctl restart janken-machine.service
 
-1. **プロジェクト概要の決定**
-   - プロジェクト名、目的、ターゲットユーザー
-   - 主要機能リスト
-   - 技術スタック選定
-
-2. **参考資料の準備**
-   - 要件定義書を `reference/` フォルダに配置
-   - ワイヤーフレーム、ER図、API仕様書等を配置
-   - サンプルデータがあれば配置
-
-### Phase 1: 初期設定（AI支援）
-
-```
-> Phase 1を開始します。
-> reference/フォルダの資料を確認し、
-> CLAUDE.mdのプレースホルダーを更新してください。
-> その後、Serenaメモリと基本ドキュメントを初期化してください。
+# ログ確認
+sudo journalctl -u janken-machine.service -f
 ```
 
-AI側が実施：
-- reference/フォルダの資料確認
-- CLAUDE.mdのプレースホルダー更新
-- .mcp.json設定確認
-- Serenaメモリ初期化
-- 基本ドキュメント作成（docs/SETUP.md等）
-
-チェックリスト: [PROJECT_INITIALIZATION_CHECKLIST.md](ai-rules/_project_template/PROJECT_INITIALIZATION_CHECKLIST.md)
-
-### Phase 2: 環境構築（AI支援）
+## ファイル構成
 
 ```
-> Phase 2を開始します。
-> Docker環境をセットアップし、
-> フロントエンド・バックエンドプロジェクトを初期化してください。
+janken-machine/
+├── src/
+│   ├── main.py                    # メインゲームロジック
+│   ├── button_controller.py       # ボタン・LED制御モジュール
+│   ├── matrix_display.py          # LEDマトリックス表示モジュール
+│   ├── test_button_input.py       # ボタン入力テスト
+│   ├── test_button_led.py         # ボタンLED出力テスト
+│   └── test_matrix_display.py     # LEDマトリックス表示テスト
+├── docs/
+│   ├── SETUP.md                   # 環境構築手順（完全版）
+│   ├── SD_CARD_SETUP.md           # SDカード書き込み手順
+│   └── REMOTE_DEVELOPMENT.md      # リモート開発手順
+├── reference/
+│   ├── requirements.md            # 要件定義書
+│   └── gpio_pinout.md             # GPIO配置仕様
+├── janken-machine.service         # systemdサービスファイル
+└── README.md                      # このファイル
 ```
 
-AI側が実施：
-- docker-compose.yml作成
-- フロントエンドプロジェクト初期化
-- バックエンドプロジェクト初期化
-- データベーススキーマ定義
-- 開発サーバー起動確認
+## トラブルシューティング
 
-### Phase 3: 開発フェーズへ移行
+### サービスが起動しない
 
-Phase 2が完了したら、通常の開発ワークフローに従います。
+```bash
+# ログを確認
+sudo journalctl -u janken-machine.service -n 50
 
-→ [既存プロジェクト開発フロー](#-既存プロジェクト開発フロー) へ
+# サービス状態を確認
+sudo systemctl status janken-machine.service
 
----
-
-## 📂 既存プロジェクト開発フロー
-
-Phase 3以降、または既存プロジェクトで使用するワークフローです。
-
-### Phase 0: 要件定義（既存プロジェクトではスキップ可）
-
-#### 1. 要件定義開始
-```
-> ai-rules/my-project/REQUIREMENTS_PROMPT.md を確認し、
-> 要件定義を行ってください。対話形式で質問に答えながら
-> REQUIREMENTS.md を作成してください。
+# 手動実行でエラー確認
+sudo python3 ~/janken-machine/src/main.py
 ```
 
-#### 2. ai-rulesテンプレートのカスタマイズ
+### LEDマトリックスが表示されない
 
-要件定義が完了したら、プロジェクト固有のai-rulesファイルを編集・追加：
+- 電源電圧確認（5V 8A）
+- HUB75ケーブル接続確認
+- パネル設定確認（`--led-rows=32 --led-cols=64 --led-chain=2`）
 
-**ai-rules/の2層構造**:
-- **common/** - 汎用ルール（変数なし、そのまま使える）
-  - どのプロジェクトでも共通の開発ルール
-  - 例: コミット規約、命名規則、汎用ワークフロー
-  - 編集不要、そのまま参照
+### GPIO 0/1 が反応しない
 
-- **_project_template/** → **my-project/** - プロジェクト固有（変数あり）
-  - {{変数}} を実際の値に置換したプロジェクト専用ルール
-  - 例: テストユーザー情報、ポート番号、MCP設定
-  - 初回セッションで自動置換・リネーム済み
-  - プロジェクトに応じてさらにカスタマイズ可能
+- I2C無効化確認: `ls /dev/i2c*` で i2c-1 が表示されないこと
+- `/boot/firmware/config.txt` で `dtparam=i2c_arm=on` がコメントアウトされていること
+- 再起動後に確認
 
-```
-> 要件定義が完了しました。
-> 以下のai-rulesファイルをプロジェクトに合わせて更新してください：
->
-> 1. SETUP_AND_MCP.md - テストユーザー情報、ポート番号を設定
-> 2. TESTING.md - E2Eテストシナリオを追加
-> 3. 必要に応じて新しいルールファイルを追加
->    例: セキュリティガイドライン、API設計規約など
-```
+## 技術スタック
 
-**追加推奨ファイル**（プロジェクトに応じて）：
-- `SECURITY_GUIDELINES.md` - セキュリティ要件
-- `API_DESIGN_RULES.md` - API設計規約
-- `UI_UX_GUIDELINES.md` - UI/UX設計ガイド
-- `DATA_PRIVACY.md` - データプライバシーポリシー
+- **言語**: Python 3.13
+- **GPIO制御**: gpiozero
+- **LEDマトリックス**: rpi-rgb-led-matrix (hzeller)
+- **OS**: Raspberry Pi OS (64-bit) Lite
 
-#### 3. docs/フォルダの準備
-```
-> docs/README.md, docs/DATABASE.md, docs/API.md を
-> 初期状態で作成してください。プロジェクト概要を記載してください。
-```
-
-### Phase 1-N: 機能実装
-
-#### 4. 各Phaseの実装サイクル
-
-```
-> Phase 1を開始します。
-> ai-rules/my-project/REQUIREMENTS.md を確認し、
-> Phase 1の実装計画を立ててください。
-```
-
-**実装サイクル**：
-1. ブランチ作成 → 実装  
-2. E2Eテスト（`e2e-tester`） → コミット  
-3. PR作成 → code-reviewerレビュー  
-4. 修正対応 → マージ  
-5. docs-updaterでドキュメント更新
-
-#### 5. Phase完了チェック
-```
-> Phase 1が完了しました。
-> 仕様との整合性を確認し、次のPhaseの準備をしてください。
-```
-
-### Phase Final: デプロイ
-
-#### 6. デプロイ準備
-```
-> 本番環境へのデプロイ準備を開始してください。
->
-> 1. 環境変数の本番設定確認
-> 2. セキュリティチェック
-> 3. パフォーマンステスト
-> 4. ドキュメント最終確認
-```
-
-#### 7. フロントエンドデプロイ（Vercel等）
-```
-> フロントエンドをVercelにデプロイしてください。
-> デプロイ後の動作確認も実施してください。
-```
-
-#### 8. バックエンドデプロイ（AWS EC2等）
-```
-> バックエンドをAWS EC2にデプロイしてください。
-> Dockerイメージのビルドとデプロイを実施してください。
-```
-
-#### 9. 本番環境E2Eテスト
-```
-> 本番環境でE2Eテストを実施してください。
-> すべての主要機能が正常に動作することを確認してください。
-```
-
-#### 10. デプロイ完了とドキュメント更新
-```
-> デプロイが完了しました。
-> docs/DEPLOYMENT.md を作成し、デプロイ手順とURL情報を記載してください。
-```
-
----
-
-## 📁 ディレクトリ構造
-
-```
-.
-├── .claude/
-│   ├── settings.json          # Claude Code設定（編集推奨）
-│   ├── settings.local.json    # ローカル設定（gitignore）
-│   └── agents/                # サブエージェント設定
-├── ai-rules/
-│   ├── common/                # プロジェクト横断の共通ルール（11ファイル）
-│   └── _project_template/     # プロジェクト固有ルール（要リネーム・編集）
-│       ├── REQUIREMENTS_PROMPT.md      # 要件定義プロンプト
-│       ├── REQUIREMENTS_ASSISTANT.md   # 要件定義アシスタント
-│       ├── DOCUMENTATION_GUIDE.md      # ドキュメント管理
-│       ├── ISSUE_GUIDELINES.md         # Issue管理
-│       ├── PR_AND_REVIEW.md            # PRレビュープロセス
-│       ├── SETUP_AND_MCP.md            # 環境構築・MCP設定
-│       ├── TESTING.md                  # テストガイドライン
-│       └── WORKFLOW.md                 # 開発ワークフロー
-├── docs/                      # 人間用ドキュメント（要作成）
-└── README.md                  # このファイル
-```
-
----
-
-## 🛠️ 含まれるai-rules
-
-### common/（プロジェクト横断）
-- `COMMIT_GUIDELINES.md` - コミットメッセージ規約
-- `DOCUMENTATION_GUIDE.md` - ドキュメント管理（共通版）
-- `ISSUE_GUIDELINES.md` - Issue管理（共通版）
-- `NAMING_CONVENTIONS.md` - 命名規則
-- `PHASE_MANAGEMENT.md` - フェーズ管理
-- `PR_PROCESS.md` - PRプロセス（共通版）
-- `SESSION_MANAGEMENT.md` - セッション管理
-- `SETTINGS_JSON_GUIDE.md` - settings.json設定ガイド
-- `WORKFLOW.md` - 開発ワークフロー（共通版）
-- `DOCUMENT_CLEANUP.md` - ドキュメントクリーンアップ
-- `DOCUMENT_CONSISTENCY.md` - ドキュメント一貫性
-
-### _project_template/（プロジェクト固有、要カスタマイズ）
-- `REQUIREMENTS_PROMPT.md` - 要件定義プロンプト
-- `REQUIREMENTS_ASSISTANT.md` - 要件定義アシスタント
-- `DOCUMENTATION_GUIDE.md` - ドキュメント管理（プロジェクト版）
-- `ISSUE_GUIDELINES.md` - Issue管理（プロジェクト版）
-- `PR_AND_REVIEW.md` - PRレビュープロセス
-- `SETUP_AND_MCP.md` - 環境構築・MCP設定
-- `TESTING.md` - テストガイドライン
-- `WORKFLOW.md` - 開発ワークフロー（プロジェクト版）
-
----
-
-## ⚙️ 推奨設定
-
-### .gitignore に追加推奨
-```.gitignore
-# Claude Code local settings
-.claude/settings.local.json
-
-# Environment variables
-.env
-.env.local
-backend/.env
-frontend/.env.local
-
-# Dependencies
-node_modules/
-__pycache__/
-```
-
-### MCP サーバー設定
-
-必要に応じて `.mcp.json` を作成してMCPサーバーを設定：
-
-```json
-{
-  "mcpServers": {
-    "github": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-github"],
-      "env": {
-        "GITHUB_TOKEN": "your-github-token"
-      }
-    },
-    "context7": {
-      "command": "npx",
-      "args": ["-y", "@upstash/context7-mcp"],
-      "env": {
-        "CONTEXT7_API_KEY": "your-context7-api-key"
-      }
-    },
-    "playwright": {
-      "command": "npx",
-      "args": ["-y", "@playwright/mcp@latest"]
-    }
-  }
-}
-```
-
----
-
-## 📖 使い方のヒント
-
-### 1. 要件定義は対話的に
-Claude Codeに「REQUIREMENTS_PROMPT.mdに従って要件定義を行ってください」と指示すると、対話形式で要件を整理できます。
-
-### 2. ai-rulesは段階的にカスタマイズ
-最初は共通ルールだけで開始し、プロジェクトが進むにつれて固有ルールを追加・調整します。
-
-### 3. Serenaメモリの活用
-セッション開始時に必ずSerenaメモリから前回の状態を読み込むよう、WORKFLOWに記載されています。
-
-### 4. サブエージェントの活用
-- **code-reviewer**: PR作成後に必ず実行
-- **e2e-tester**: コミット前に必ず実行
-- **docs-updater**: マージ後に必ず実行
-
-### 5. デプロイは段階的に
-- まずステージング環境でテスト
-- E2Eテスト合格後に本番デプロイ
-- デプロイ後も必ず動作確認
-
----
-
-## 🤝 コントリビューション
-
-このテンプレート自体への改善提案は Issue/PR でお願いします。
-
----
-
-## 📄 ライセンス
+## ライセンス
 
 MIT License
 
----
+## 作者
 
-**このテンプレートを使って、素早くClaude Codeプロジェクトを開始しましょう！**
+- **GitHub**: [@ShigaRyunosuke10](https://github.com/ShigaRyunosuke10)
+- **リポジトリ**: https://github.com/ShigaRyunosuke10/janken-machine
+
+## 謝辞
+
+- [hzeller/rpi-rgb-led-matrix](https://github.com/hzeller/rpi-rgb-led-matrix) - RGB LED マトリックス制御ライブラリ
+- [gpiozero](https://gpiozero.readthedocs.io/) - Raspberry Pi GPIO制御ライブラリ
