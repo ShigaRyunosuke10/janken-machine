@@ -28,11 +28,11 @@ class ButtonController:
         self.button_yellow = Button(PIN_YELLOW, pull_up=True)
         self.button_blue = Button(PIN_BLUE, pull_up=True)
 
-        # LED初期化
-        self.led_start = LED(PIN_START_LED)
-        self.led_red = LED(PIN_RED_LED)
-        self.led_yellow = LED(PIN_YELLOW_LED)
-        self.led_blue = LED(PIN_BLUE_LED)
+        # LED初期化（active_low=True で点灯・消灯を反転）
+        self.led_start = LED(PIN_START_LED, active_high=False)
+        self.led_red = LED(PIN_RED_LED, active_high=False)
+        self.led_yellow = LED(PIN_YELLOW_LED, active_high=False)
+        self.led_blue = LED(PIN_BLUE_LED, active_high=False)
 
         # 点滅制御用
         self._blink_threads = {}
