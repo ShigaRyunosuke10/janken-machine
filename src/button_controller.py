@@ -85,11 +85,14 @@ class ButtonController:
 
     def _blink_worker(self, led_name: str, interval: float, stop_flag: threading.Event):
         """点滅処理のワーカー"""
+        state = True
         while not stop_flag.is_set():
-            self.set_led(led_name, True)
+            self.set_led(led_name, state)
+            state = not state
             time.sleep(interval)
-            self.set_led(led_name, False)
-            time.sleep(interval)
+
+        # スレッド終了時に必ず消灯
+        self.set_led(led_name, False)
 
     def stop_blink(self, led_name: str):
         """
@@ -107,13 +110,53 @@ class ButtonController:
 
             del self._blink_stop_flags[led_name]
 
-        # LEDを消灯
+        # LEDを消灯（スレッド終了を確実にするため少し待機）
+        time.sleep(0.05)
         self.set_led(led_name, False)
 
     def stop_all_blinks(self):
         """全LEDの点滅を停止"""
         for led_name in list(self._blink_stop_flags.keys()):
             self.stop_blink(led_name)
+
+    def start_all_blink(self, interval: float = 0.3):
+        """
+        赤・黄・青のLEDを全て同時に点滅（同期）
+
+        Args:
+            interval: 点滅間隔（秒）
+        """
+        # 既存の点滅を停止
+        self.stop_all_blinks()
+
+        # 停止フラグを作成
+        stop_flag = threading.Event()
+        self._blink_stop_flags['all'] = stop_flag
+
+        # 同期点滅スレッド開始
+        thread = threading.Thread(
+            target=self._all_blink_worker,
+            args=(interval, stop_flag),
+            daemon=True
+        )
+        self._blink_threads['all'] = thread
+        thread.start()
+
+    def _all_blink_worker(self, interval: float, stop_flag: threading.Event):
+        """全ボタンLED同期点滅のワーカー"""
+        state = True
+        while not stop_flag.is_set():
+            # 全てのLEDを同じ状態に設定
+            self.set_led('red', state)
+            self.set_led('yellow', state)
+            self.set_led('blue', state)
+            state = not state
+            time.sleep(interval)
+
+        # スレッド終了時に全て消灯
+        self.set_led('red', False)
+        self.set_led('yellow', False)
+        self.set_led('blue', False)
 
     def all_leds_off(self):
         """全LED消灯"""

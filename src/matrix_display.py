@@ -76,7 +76,7 @@ class MatrixDisplay:
         """
         image = self._create_image()
         draw = ImageDraw.Draw(image)
-        draw.text((x, y), text, font=self.font, fill=color)
+        draw.text((x, y), text, font=self.font, fill=color, anchor='lt')
         self._display_image(image)
 
     def draw_multiline_text(self, lines: list):
@@ -90,16 +90,22 @@ class MatrixDisplay:
         image = self._create_image()
         draw = ImageDraw.Draw(image)
 
+        # 上下の装飾線を描画
+        draw.line([(0, 0), (63, 0)], fill=self.COLOR_CYAN, width=1)  # 上の線
+        draw.line([(0, 63), (63, 63)], fill=self.COLOR_CYAN, width=1)  # 下の線
+
         for text, x, y, color in lines:
-            draw.text((x, y), text, font=self.font, fill=color)
+            draw.text((x, y), text, font=self.font, fill=color, anchor='lt')
 
         self._display_image(image)
 
     def show_push_start(self):
-        """「スタート」表示"""
+        """「じゃんけんゲーム スタートを押してね」表示"""
         self.draw_multiline_text([
-            ("じゃんけん", 4, 16, self.COLOR_GREEN),
-            ("スタート", 4, 38, self.COLOR_CYAN)
+            ("じゃんけん", 2, 4, self.COLOR_GREEN),
+            ("ゲーム", 16, 18, self.COLOR_GREEN),
+            ("スタートを", 2, 36, self.COLOR_CYAN),
+            ("おしてね", 8, 50, self.COLOR_CYAN)
         ])
 
     def show_countdown(self, count: int):
@@ -128,10 +134,11 @@ class MatrixDisplay:
             count: カウント数（5, 4, 3, 2, 1）
         """
         count_str = str(count)
+        # 数字は1桁なので約7px、中央は(64-7)/2≈28
         self.draw_multiline_text([
-            ("手を", 18, 8, self.COLOR_WHITE),
-            ("えらんで", 6, 24, self.COLOR_WHITE),
-            (count_str, 26, 44, self.COLOR_YELLOW)
+            ("手を", 20, 6, self.COLOR_WHITE),
+            ("えらんで", 8, 20, self.COLOR_WHITE),
+            (count_str, 28, 42, self.COLOR_YELLOW)
         ])
 
     def show_hand(self, hand: str, is_player: bool = True):
@@ -150,25 +157,43 @@ class MatrixDisplay:
 
         if hand in hand_map:
             text, color = hand_map[hand]
-            label = "あなた" if is_player else "CPU"
+            if is_player:
+                label = "あなた"
+                label_color = self.COLOR_CYAN
+            else:
+                label = "わたし"
+                label_color = self.COLOR_MAGENTA
+
+            # 手の位置: グー・パー(2文字)は x=20、チョキ(3文字)は x=14 で「あなた」と揃える
+            if text == "チョキ":
+                hand_x = 14
+            else:
+                hand_x = 20
 
             self.draw_multiline_text([
-                (label, 12, 20, self.COLOR_WHITE),
-                (text, 16, 40, color)
+                (label, 14, 8, label_color),
+                (text, hand_x, 42, color)
             ])
 
-    def show_result(self, result: str):
+    def show_result(self, result: str, win_streak: int = 0):
         """
         結果表示
 
         Args:
             result: 'win', 'lose', 'draw'
+            win_streak: 連勝数（勝った時のみ表示）
         """
-        result_map = {
-            'win': [("あなた", 8, 16, self.COLOR_WHITE), ("かち！", 8, 38, self.COLOR_GREEN)],
-            'lose': [("あなた", 8, 16, self.COLOR_WHITE), ("まけ", 12, 38, self.COLOR_RED)],
-            'draw': [("あいこ", 10, 26, self.COLOR_YELLOW)]
-        }
+        if result == 'win' and win_streak > 0:
+            streak_text = f"{win_streak}連勝中"
+            result_map = {
+                'win': [("あなたの", 8, 6, self.COLOR_WHITE), ("かち", 20, 20, self.COLOR_GREEN), (streak_text, 8, 36, self.COLOR_YELLOW)]
+            }
+        else:
+            result_map = {
+                'win': [("あなたの", 8, 20, self.COLOR_WHITE), ("かち", 20, 32, self.COLOR_GREEN)],
+                'lose': [("あなたの", 8, 20, self.COLOR_WHITE), ("まけ", 20, 32, self.COLOR_RED)],
+                'draw': [("あいこ", 14, 26, self.COLOR_YELLOW)]
+            }
 
         if result in result_map:
             self.draw_multiline_text(result_map[result])
@@ -176,9 +201,32 @@ class MatrixDisplay:
     def show_no_selection(self):
         """「時間切れ」表示"""
         self.draw_multiline_text([
-            ("じかん", 10, 18, self.COLOR_YELLOW),
-            ("きれ", 14, 38, self.COLOR_YELLOW)
+            ("じかん", 14, 8, self.COLOR_YELLOW),
+            ("きれ", 20, 42, self.COLOR_YELLOW)
         ])
+
+    def show_continue_prompt(self, win_streak: int = 0, countdown: int = 5):
+        """「続きをやる？」表示
+
+        Args:
+            win_streak: 現在の連勝数
+            countdown: 残り時間（秒）
+        """
+        countdown_str = str(countdown)
+        if win_streak > 0:
+            streak_text = f"{win_streak}連勝中"
+            self.draw_multiline_text([
+                (streak_text, 12, 6, self.COLOR_YELLOW),
+                ("つづきを", 6, 20, self.COLOR_WHITE),
+                ("やる？", 10, 38, self.COLOR_WHITE),
+                (countdown_str, 28, 52, self.COLOR_CYAN)
+            ])
+        else:
+            self.draw_multiline_text([
+                ("つづきを", 6, 14, self.COLOR_WHITE),
+                ("やる？", 10, 38, self.COLOR_WHITE),
+                (countdown_str, 28, 52, self.COLOR_CYAN)
+            ])
 
     def show_vs_screen(self, player_hand: str, cpu_hand: str):
         """
@@ -197,11 +245,16 @@ class MatrixDisplay:
         player_text = hand_map.get(player_hand, '???')
         cpu_text = hand_map.get(cpu_hand, '???')
 
+        # プレイヤーの手の位置: チョキは x=14、グー・パーは x=20
+        player_x = 14 if player_text == "チョキ" else 20
+        # CPUの手の位置: チョキは x=14、グー・パーは x=20
+        cpu_x = 14 if cpu_text == "チョキ" else 20
+
         self.draw_multiline_text([
-            ("あなた", 12, 6, self.COLOR_CYAN),
-            (player_text, 16, 20, self.COLOR_WHITE),
-            ("VS", 22, 34, self.COLOR_YELLOW),
-            (cpu_text, 16, 48, self.COLOR_WHITE)
+            ("あなた", 14, 4, self.COLOR_CYAN),
+            (player_text, player_x, 18, self.COLOR_WHITE),
+            ("わたし", 14, 36, self.COLOR_MAGENTA),
+            (cpu_text, cpu_x, 50, self.COLOR_WHITE)
         ])
 
     def fill_color(self, r: int, g: int, b: int):

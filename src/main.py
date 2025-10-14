@@ -16,6 +16,7 @@ class JankenGame:
         self.buttons = ButtonController()
         self.display = MatrixDisplay()
         self.hands = ['rock', 'scissors', 'paper']
+        self.win_streak = 0  # 連勝カウンター
 
     def wait_for_start(self):
         """スタート待機状態"""
@@ -40,7 +41,9 @@ class JankenGame:
         self.buttons.set_led('start', True)
 
         print("START button pressed!")
-        time.sleep(0.3)
+
+        # スタートボタンLED消灯
+        self.buttons.set_led('start', False)
 
     def countdown_and_selection(self):
         """
@@ -55,10 +58,8 @@ class JankenGame:
         # スタートボタンLED点灯
         self.buttons.set_led('start', True)
 
-        # 選択ボタンLEDを点滅開始
-        self.buttons.start_blink('red', interval=0.3)
-        self.buttons.start_blink('yellow', interval=0.3)
-        self.buttons.start_blink('blue', interval=0.3)
+        # 選択ボタンLEDを全点滅開始
+        self.buttons.start_all_blink(interval=0.3)
 
         selected_hand = None
         start_time = time.time()
@@ -76,32 +77,47 @@ class JankenGame:
                     if self.buttons.is_button_pressed('red'):
                         selected_hand = 'rock'
                         print(f"  Player selected: {selected_hand}")
-                        # 選択されたボタンのみ点灯（他は消灯）
+                        # チェイス点滅を停止して選択ボタンのみ点灯
                         self.buttons.stop_all_blinks()
+                        time.sleep(0.1)  # 停止処理が完了するまで待機
                         self.buttons.set_led('red', True)
                         self.buttons.set_led('yellow', False)
                         self.buttons.set_led('blue', False)
+                        break  # すぐにループを抜ける
                     elif self.buttons.is_button_pressed('yellow'):
                         selected_hand = 'scissors'
                         print(f"  Player selected: {selected_hand}")
                         self.buttons.stop_all_blinks()
+                        time.sleep(0.1)
                         self.buttons.set_led('red', False)
                         self.buttons.set_led('yellow', True)
                         self.buttons.set_led('blue', False)
+                        break  # すぐにループを抜ける
                     elif self.buttons.is_button_pressed('blue'):
                         selected_hand = 'paper'
                         print(f"  Player selected: {selected_hand}")
                         self.buttons.stop_all_blinks()
+                        time.sleep(0.1)
                         self.buttons.set_led('red', False)
                         self.buttons.set_led('yellow', False)
                         self.buttons.set_led('blue', True)
+                        break  # すぐにループを抜ける
 
                 time.sleep(0.05)
+
+            # 選択されたらforループも抜ける
+            if selected_hand is not None:
+                break
 
         # 5秒経過後、選択されていない場合は時間切れ
         if selected_hand is None:
             print(f"  No selection - Timeout!")
             self.buttons.stop_all_blinks()
+
+            # 念のため全ボタンLEDを明示的に消灯
+            self.buttons.set_led('red', False)
+            self.buttons.set_led('yellow', False)
+            self.buttons.set_led('blue', False)
 
             # 時間切れメッセージを表示
             self.display.show_no_selection()
@@ -110,14 +126,42 @@ class JankenGame:
             # Noneを返して最初に戻る
             return None
 
-        # 残り時間を待機（5秒経過まで）
-        elapsed = time.time() - start_time
-        if elapsed < 5.0:
-            wait_time = 5.0 - elapsed
-            print(f"  Waiting {wait_time:.1f}s before result...")
-            time.sleep(wait_time)
-
+        # 選択されたのでそのまま返す（5秒待たない）
         return selected_hand
+
+    def ask_continue(self):
+        """
+        続行確認（5秒間スタートボタン待機）
+
+        Returns:
+            True=続行, False=終了
+        """
+        print("=== Ask Continue ===")
+
+        # スタートボタンLEDを点滅
+        self.buttons.start_blink('start', interval=0.3)
+
+        # 5秒間カウントダウンしながらスタートボタンを待つ
+        for countdown in [5, 4, 3, 2, 1]:
+            # カウントダウン付き続行確認画面を表示
+            self.display.show_continue_prompt(self.win_streak, countdown)
+
+            count_start = time.time()
+
+            # 1秒間ボタン入力をチェック
+            while time.time() - count_start < 1.0:
+                if self.buttons.is_button_pressed('start'):
+                    print("  Continue!")
+                    self.buttons.stop_blink('start')
+                    self.buttons.set_led('start', False)
+                    return True
+                time.sleep(0.05)
+
+        # タイムアウト
+        print("  Timeout - Reset")
+        self.buttons.stop_blink('start')
+        self.buttons.set_led('start', False)
+        return False
 
     def cpu_selection(self):
         """
@@ -163,8 +207,8 @@ class JankenGame:
         self.display.show_vs_screen(player_hand, cpu_hand)
         time.sleep(2)
 
-        # 結果表示
-        self.display.show_result(result)
+        # 結果表示（連勝数付き）
+        self.display.show_result(result, self.win_streak)
 
         # LED演出
         if result == 'win':
@@ -196,33 +240,55 @@ class JankenGame:
         time.sleep(2)
 
     def run_game_loop(self):
-        """ゲームループ"""
+        """ゲームループ（連勝システム対応）"""
         try:
             while True:
                 # 1. スタート待機
                 self.wait_for_start()
 
-                # 2. カウントダウン + 手選択（統合・5秒）
-                player_hand = self.countdown_and_selection()
+                # ゲームセッション開始
+                while True:
+                    # 2. カウントダウン + 手選択（統合・5秒）
+                    player_hand = self.countdown_and_selection()
 
-                # 時間切れの場合は最初に戻る
-                if player_hand is None:
-                    print("=== Timeout - Return to start ===\n")
-                    time.sleep(1)
-                    continue
+                    # 時間切れの場合はリセット
+                    if player_hand is None:
+                        print("=== Timeout - Reset ===\n")
+                        self.win_streak = 0
+                        time.sleep(1)
+                        break  # スタート画面に戻る
 
-                # 3. CPU手選択
-                cpu_hand = self.cpu_selection()
+                    # 3. CPU手選択
+                    cpu_hand = self.cpu_selection()
 
-                # 4. 勝敗判定
-                result = self.judge(player_hand, cpu_hand)
+                    # 4. 勝敗判定
+                    result = self.judge(player_hand, cpu_hand)
 
-                # 5. 結果表示
-                self.show_result(player_hand, cpu_hand, result)
+                    # 5. 結果表示
+                    if result == 'win':
+                        # 勝った場合：連勝数を増やす
+                        self.win_streak += 1
+                        print(f"Win! Streak: {self.win_streak}")
 
-                # 6. 次のゲームへ（自動リセット）
-                print("=== Auto reset in 3 seconds ===\n")
-                time.sleep(3)
+                    self.show_result(player_hand, cpu_hand, result)
+
+                    # 6. 続行判定
+                    if result == 'lose':
+                        # 負けた場合：リセットしてスタート画面へ
+                        print("=== Lose - Reset ===\n")
+                        self.win_streak = 0
+                        time.sleep(2)
+                        break
+                    elif result == 'win' or result == 'draw':
+                        # 勝ち or あいこ：続行確認
+                        if self.ask_continue():
+                            # 続行
+                            continue
+                        else:
+                            # タイムアウト：リセット
+                            print("=== Timeout - Reset ===\n")
+                            self.win_streak = 0
+                            break
 
         except KeyboardInterrupt:
             print("\n\nGame terminated by user")
