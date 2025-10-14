@@ -104,6 +104,10 @@ class JankenGame:
             print(f"  No selection - Random: {selected_hand}")
             self.buttons.stop_all_blinks()
 
+            # 時間切れメッセージを表示
+            self.display.show_no_selection()
+            time.sleep(2)
+
         # 残り時間を待機（5秒経過まで）
         elapsed = time.time() - start_time
         if elapsed < 5.0:

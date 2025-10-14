@@ -98,8 +98,8 @@ class MatrixDisplay:
     def show_push_start(self):
         """「スタート」表示"""
         self.draw_multiline_text([
-            ("じゃんけん", 8, 16, self.COLOR_GREEN),
-            ("スタート", 12, 38, self.COLOR_CYAN)
+            ("じゃんけん", 4, 16, self.COLOR_GREEN),
+            ("スタート", 4, 38, self.COLOR_CYAN)
         ])
 
     def show_countdown(self, count: int):
@@ -116,8 +116,8 @@ class MatrixDisplay:
     def show_choice_prompt(self):
         """「手を選んで」表示"""
         self.draw_multiline_text([
-            ("手を", 20, 20, self.COLOR_WHITE),
-            ("えらんで", 8, 40, self.COLOR_WHITE)
+            ("手を", 18, 18, self.COLOR_WHITE),
+            ("えらんで", 6, 38, self.COLOR_WHITE)
         ])
 
     def show_choice_prompt_with_countdown(self, count: int):
@@ -129,8 +129,8 @@ class MatrixDisplay:
         """
         count_str = str(count)
         self.draw_multiline_text([
-            ("えらんで", 8, 18, self.COLOR_WHITE),
-            (count_str, 26, 40, self.COLOR_YELLOW)
+            ("えらんで", 6, 16, self.COLOR_WHITE),
+            (count_str, 26, 38, self.COLOR_YELLOW)
         ])
 
     def show_hand(self, hand: str, is_player: bool = True):
@@ -164,13 +164,20 @@ class MatrixDisplay:
             result: 'win', 'lose', 'draw'
         """
         result_map = {
-            'win': [("あなた", 12, 16, self.COLOR_WHITE), ("かち！", 12, 38, self.COLOR_GREEN)],
-            'lose': [("あなた", 12, 16, self.COLOR_WHITE), ("まけ", 16, 38, self.COLOR_RED)],
-            'draw': [("あいこ", 12, 26, self.COLOR_YELLOW)]
+            'win': [("あなた", 8, 16, self.COLOR_WHITE), ("かち！", 8, 38, self.COLOR_GREEN)],
+            'lose': [("あなた", 8, 16, self.COLOR_WHITE), ("まけ", 12, 38, self.COLOR_RED)],
+            'draw': [("あいこ", 10, 26, self.COLOR_YELLOW)]
         }
 
         if result in result_map:
             self.draw_multiline_text(result_map[result])
+
+    def show_no_selection(self):
+        """「時間切れ」表示"""
+        self.draw_multiline_text([
+            ("じかん", 10, 18, self.COLOR_YELLOW),
+            ("きれ", 14, 38, self.COLOR_YELLOW)
+        ])
 
     def show_vs_screen(self, player_hand: str, cpu_hand: str):
         """
