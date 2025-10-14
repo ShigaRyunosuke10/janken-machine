@@ -48,7 +48,7 @@ class JankenGame:
         5秒間のカウントダウン中にボタン選択可能
 
         Returns:
-            'rock', 'scissors', 'paper'
+            'rock', 'scissors', 'paper' or None (timeout)
         """
         print("=== Countdown + Selection ===")
 
@@ -98,15 +98,17 @@ class JankenGame:
 
                 time.sleep(0.05)
 
-        # 5秒経過後、選択されていない場合はランダム
+        # 5秒経過後、選択されていない場合は時間切れ
         if selected_hand is None:
-            selected_hand = random.choice(self.hands)
-            print(f"  No selection - Random: {selected_hand}")
+            print(f"  No selection - Timeout!")
             self.buttons.stop_all_blinks()
 
             # 時間切れメッセージを表示
             self.display.show_no_selection()
             time.sleep(2)
+
+            # Noneを返して最初に戻る
+            return None
 
         # 残り時間を待機（5秒経過まで）
         elapsed = time.time() - start_time
@@ -203,6 +205,12 @@ class JankenGame:
                 # 2. カウントダウン + 手選択（統合・5秒）
                 player_hand = self.countdown_and_selection()
 
+                # 時間切れの場合は最初に戻る
+                if player_hand is None:
+                    print("=== Timeout - Return to start ===\n")
+                    time.sleep(1)
+                    continue
+
                 # 3. CPU手選択
                 cpu_hand = self.cpu_selection()
 
@@ -212,7 +220,7 @@ class JankenGame:
                 # 5. 結果表示
                 self.show_result(player_hand, cpu_hand, result)
 
-                # 7. 次のゲームへ（自動リセット）
+                # 6. 次のゲームへ（自動リセット）
                 print("=== Auto reset in 3 seconds ===\n")
                 time.sleep(3)
 
