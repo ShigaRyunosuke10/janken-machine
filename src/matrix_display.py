@@ -122,15 +122,16 @@ class MatrixDisplay:
 
     def show_choice_prompt_with_countdown(self, count: int):
         """
-        「えらんで」+ カウントダウン表示
+        「手を えらんで」+ カウントダウン表示
 
         Args:
             count: カウント数（5, 4, 3, 2, 1）
         """
         count_str = str(count)
         self.draw_multiline_text([
-            ("えらんで", 6, 16, self.COLOR_WHITE),
-            (count_str, 26, 38, self.COLOR_YELLOW)
+            ("手を", 18, 8, self.COLOR_WHITE),
+            ("えらんで", 6, 24, self.COLOR_WHITE),
+            (count_str, 26, 44, self.COLOR_YELLOW)
         ])
 
     def show_hand(self, hand: str, is_player: bool = True):
