@@ -29,11 +29,11 @@ class MatrixDisplay:
         # マトリックス初期化
         self.matrix = RGBMatrix(options=options)
 
-        # 日本語フォント（Noto Sans CJK JP）16×16ピクセル
+        # 日本語フォント（Noto Sans CJK JP）12×12ピクセル
         try:
             self.font = ImageFont.truetype(
                 "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
-                16,
+                12,
                 index=0  # Noto Sans CJK JP
             )
         except Exception as e:
@@ -98,8 +98,8 @@ class MatrixDisplay:
     def show_push_start(self):
         """「スタート」表示"""
         self.draw_multiline_text([
-            ("じゃんけん", 4, 12, self.COLOR_GREEN),
-            ("スタート", 8, 38, self.COLOR_CYAN)
+            ("じゃんけん", 8, 16, self.COLOR_GREEN),
+            ("スタート", 12, 38, self.COLOR_CYAN)
         ])
 
     def show_countdown(self, count: int):
@@ -116,8 +116,8 @@ class MatrixDisplay:
     def show_choice_prompt(self):
         """「手を選んで」表示"""
         self.draw_multiline_text([
-            ("手を", 16, 18, self.COLOR_WHITE),
-            ("えらんで", 4, 42, self.COLOR_WHITE)
+            ("手を", 20, 20, self.COLOR_WHITE),
+            ("えらんで", 8, 40, self.COLOR_WHITE)
         ])
 
     def show_choice_prompt_with_countdown(self, count: int):
@@ -129,8 +129,8 @@ class MatrixDisplay:
         """
         count_str = str(count)
         self.draw_multiline_text([
-            ("えらんで", 4, 8, self.COLOR_WHITE),
-            (count_str, 24, 38, self.COLOR_YELLOW)
+            ("えらんで", 8, 18, self.COLOR_WHITE),
+            (count_str, 26, 40, self.COLOR_YELLOW)
         ])
 
     def show_hand(self, hand: str, is_player: bool = True):
@@ -152,8 +152,8 @@ class MatrixDisplay:
             label = "あなた" if is_player else "CPU"
 
             self.draw_multiline_text([
-                (label, 8, 18, self.COLOR_WHITE),
-                (text, 12, 42, color)
+                (label, 12, 20, self.COLOR_WHITE),
+                (text, 16, 40, color)
             ])
 
     def show_result(self, result: str):
@@ -164,9 +164,9 @@ class MatrixDisplay:
             result: 'win', 'lose', 'draw'
         """
         result_map = {
-            'win': [("あなた", 8, 12, self.COLOR_WHITE), ("かち！", 8, 38, self.COLOR_GREEN)],
-            'lose': [("あなた", 8, 12, self.COLOR_WHITE), ("まけ", 12, 38, self.COLOR_RED)],
-            'draw': [("あいこ", 8, 24, self.COLOR_YELLOW)]
+            'win': [("あなた", 12, 16, self.COLOR_WHITE), ("かち！", 12, 38, self.COLOR_GREEN)],
+            'lose': [("あなた", 12, 16, self.COLOR_WHITE), ("まけ", 16, 38, self.COLOR_RED)],
+            'draw': [("あいこ", 12, 26, self.COLOR_YELLOW)]
         }
 
         if result in result_map:
@@ -190,10 +190,10 @@ class MatrixDisplay:
         cpu_text = hand_map.get(cpu_hand, '???')
 
         self.draw_multiline_text([
-            ("あなた", 8, 2, self.COLOR_CYAN),
-            (player_text, 12, 18, self.COLOR_WHITE),
-            ("VS", 20, 32, self.COLOR_YELLOW),
-            (cpu_text, 12, 48, self.COLOR_WHITE)
+            ("あなた", 12, 6, self.COLOR_CYAN),
+            (player_text, 16, 20, self.COLOR_WHITE),
+            ("VS", 22, 34, self.COLOR_YELLOW),
+            (cpu_text, 16, 48, self.COLOR_WHITE)
         ])
 
     def fill_color(self, r: int, g: int, b: int):
