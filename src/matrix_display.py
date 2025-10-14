@@ -29,8 +29,17 @@ class MatrixDisplay:
         # マトリックス初期化
         self.matrix = RGBMatrix(options=options)
 
-        # PILのデフォルトフォントを使用（フォントファイル不要）
-        self.font = ImageFont.load_default()
+        # 日本語フォント（Noto Sans CJK JP）16×16ピクセル
+        try:
+            self.font = ImageFont.truetype(
+                "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+                16,
+                index=0  # Noto Sans CJK JP
+            )
+        except Exception as e:
+            print(f"Warning: Could not load Japanese font: {e}")
+            print("Falling back to default font")
+            self.font = ImageFont.load_default()
 
         # 色定義（RGB tuple形式）
         self.COLOR_RED = (255, 0, 0)
@@ -87,10 +96,10 @@ class MatrixDisplay:
         self._display_image(image)
 
     def show_push_start(self):
-        """「PUSH START」表示（test_display_long.pyと同じ配置）"""
+        """「スタート」表示"""
         self.draw_multiline_text([
-            ("PUSH", 10, 16, self.COLOR_GREEN),
-            ("START", 8, 40, self.COLOR_CYAN)
+            ("じゃんけん", 4, 12, self.COLOR_GREEN),
+            ("スタート", 8, 38, self.COLOR_CYAN)
         ])
 
     def show_countdown(self, count: int):
@@ -105,26 +114,23 @@ class MatrixDisplay:
         self.draw_text(text, 28, 30, self.COLOR_YELLOW)
 
     def show_choice_prompt(self):
-        """「SELECT YOUR HAND」表示"""
+        """「手を選んで」表示"""
         self.draw_multiline_text([
-            ("SELECT", 10, 15, self.COLOR_WHITE),
-            ("YOUR", 14, 30, self.COLOR_WHITE),
-            ("HAND", 14, 45, self.COLOR_WHITE)
+            ("手を", 16, 18, self.COLOR_WHITE),
+            ("えらんで", 4, 42, self.COLOR_WHITE)
         ])
 
     def show_choice_prompt_with_countdown(self, count: int):
         """
-        「SELECT」+ カウントダウン表示
+        「えらんで」+ カウントダウン表示
 
         Args:
-            count: カウント数（3, 2, 1）
+            count: カウント数（5, 4, 3, 2, 1）
         """
         count_str = str(count)
         self.draw_multiline_text([
-            ("SELECT", 10, 10, self.COLOR_WHITE),
-            ("YOUR", 14, 25, self.COLOR_WHITE),
-            ("HAND", 14, 40, self.COLOR_WHITE),
-            (count_str, 28, 52, self.COLOR_YELLOW)
+            ("えらんで", 4, 8, self.COLOR_WHITE),
+            (count_str, 24, 38, self.COLOR_YELLOW)
         ])
 
     def show_hand(self, hand: str, is_player: bool = True):
@@ -136,18 +142,18 @@ class MatrixDisplay:
             is_player: True=プレイヤー, False=CPU
         """
         hand_map = {
-            'rock': ("ROCK", self.COLOR_RED),
-            'scissors': ("SCIS", self.COLOR_YELLOW),
-            'paper': ("PAPER", self.COLOR_BLUE)
+            'rock': ("グー", self.COLOR_RED),
+            'scissors': ("チョキ", self.COLOR_YELLOW),
+            'paper': ("パー", self.COLOR_BLUE)
         }
 
         if hand in hand_map:
             text, color = hand_map[hand]
-            label = "YOU" if is_player else "CPU"
+            label = "あなた" if is_player else "CPU"
 
             self.draw_multiline_text([
-                (label, 18, 20, self.COLOR_WHITE),
-                (text, 14, 40, color)
+                (label, 8, 18, self.COLOR_WHITE),
+                (text, 12, 42, color)
             ])
 
     def show_result(self, result: str):
@@ -158,9 +164,9 @@ class MatrixDisplay:
             result: 'win', 'lose', 'draw'
         """
         result_map = {
-            'win': [("YOU", 18, 20, self.COLOR_WHITE), ("WIN!", 14, 40, self.COLOR_GREEN)],
-            'lose': [("YOU", 18, 20, self.COLOR_WHITE), ("LOSE", 14, 40, self.COLOR_RED)],
-            'draw': [("DRAW", 14, 30, self.COLOR_YELLOW)]
+            'win': [("あなた", 8, 12, self.COLOR_WHITE), ("かち！", 8, 38, self.COLOR_GREEN)],
+            'lose': [("あなた", 8, 12, self.COLOR_WHITE), ("まけ", 12, 38, self.COLOR_RED)],
+            'draw': [("あいこ", 8, 24, self.COLOR_YELLOW)]
         }
 
         if result in result_map:
@@ -174,20 +180,20 @@ class MatrixDisplay:
             player_hand: 'rock', 'scissors', 'paper'
             cpu_hand: 'rock', 'scissors', 'paper'
         """
-        hand_short = {
-            'rock': 'ROCK',
-            'scissors': 'SCIS',
-            'paper': 'PAPR'
+        hand_map = {
+            'rock': 'グー',
+            'scissors': 'チョキ',
+            'paper': 'パー'
         }
 
-        player_text = hand_short.get(player_hand, '???')
-        cpu_text = hand_short.get(cpu_hand, '???')
+        player_text = hand_map.get(player_hand, '???')
+        cpu_text = hand_map.get(cpu_hand, '???')
 
         self.draw_multiline_text([
-            ("YOU", 18, 10, self.COLOR_CYAN),
-            (player_text, 14, 22, self.COLOR_WHITE),
-            ("VS", 22, 34, self.COLOR_YELLOW),
-            (cpu_text, 14, 46, self.COLOR_WHITE)
+            ("あなた", 8, 2, self.COLOR_CYAN),
+            (player_text, 12, 18, self.COLOR_WHITE),
+            ("VS", 20, 32, self.COLOR_YELLOW),
+            (cpu_text, 12, 48, self.COLOR_WHITE)
         ])
 
     def fill_color(self, r: int, g: int, b: int):
