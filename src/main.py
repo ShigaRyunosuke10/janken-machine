@@ -42,65 +42,74 @@ class JankenGame:
         print("START button pressed!")
         time.sleep(0.3)
 
-    def countdown_with_choice_prompt(self):
-        """カウントダウン + SELECT表示"""
-        print("=== Countdown + SELECT ===")
-
-        for count in [5, 4, 3, 2, 1]:
-            print(f"  {count}...")
-            self.display.show_choice_prompt_with_countdown(count)
-            time.sleep(1)
-
-    def player_selection(self):
+    def countdown_and_selection(self):
         """
-        プレイヤーの手選択
-        ※ SELECT画面はカウントダウンで既に表示済み
+        カウントダウン + 手選択（統合）
+        5秒間のカウントダウン中にボタン選択可能
 
         Returns:
             'rock', 'scissors', 'paper'
         """
-        print("=== Player selection ===")
+        print("=== Countdown + Selection ===")
 
         # スタートボタンLED点灯
         self.buttons.set_led('start', True)
 
-        # 選択ボタンLEDを点滅
+        # 選択ボタンLEDを点滅開始
         self.buttons.start_blink('red', interval=0.3)
         self.buttons.start_blink('yellow', interval=0.3)
         self.buttons.start_blink('blue', interval=0.3)
 
-        # ボタンが押されるまで待機
         selected_hand = None
+        start_time = time.time()
 
-        while selected_hand is None:
-            if self.buttons.is_button_pressed('red'):
-                selected_hand = 'rock'
-            elif self.buttons.is_button_pressed('yellow'):
-                selected_hand = 'scissors'
-            elif self.buttons.is_button_pressed('blue'):
-                selected_hand = 'paper'
+        # 5秒間のカウントダウン + 選択受付
+        for count in [5, 4, 3, 2, 1]:
+            print(f"  {count}...")
+            self.display.show_choice_prompt_with_countdown(count)
 
-            time.sleep(0.05)
+            count_start = time.time()
 
-        print(f"  Player selected: {selected_hand}")
+            # 1秒間ボタン入力をチェック
+            while time.time() - count_start < 1.0:
+                if selected_hand is None:
+                    if self.buttons.is_button_pressed('red'):
+                        selected_hand = 'rock'
+                        print(f"  Player selected: {selected_hand}")
+                        # 選択されたボタンのみ点灯（他は消灯）
+                        self.buttons.stop_all_blinks()
+                        self.buttons.set_led('red', True)
+                        self.buttons.set_led('yellow', False)
+                        self.buttons.set_led('blue', False)
+                    elif self.buttons.is_button_pressed('yellow'):
+                        selected_hand = 'scissors'
+                        print(f"  Player selected: {selected_hand}")
+                        self.buttons.stop_all_blinks()
+                        self.buttons.set_led('red', False)
+                        self.buttons.set_led('yellow', True)
+                        self.buttons.set_led('blue', False)
+                    elif self.buttons.is_button_pressed('blue'):
+                        selected_hand = 'paper'
+                        print(f"  Player selected: {selected_hand}")
+                        self.buttons.stop_all_blinks()
+                        self.buttons.set_led('red', False)
+                        self.buttons.set_led('yellow', False)
+                        self.buttons.set_led('blue', True)
 
-        # 選択されたボタンのLEDを点灯、他は消灯
-        self.buttons.stop_all_blinks()
+                time.sleep(0.05)
 
-        if selected_hand == 'rock':
-            self.buttons.set_led('red', True)
-            self.buttons.set_led('yellow', False)
-            self.buttons.set_led('blue', False)
-        elif selected_hand == 'scissors':
-            self.buttons.set_led('red', False)
-            self.buttons.set_led('yellow', True)
-            self.buttons.set_led('blue', False)
-        elif selected_hand == 'paper':
-            self.buttons.set_led('red', False)
-            self.buttons.set_led('yellow', False)
-            self.buttons.set_led('blue', True)
+        # 5秒経過後、選択されていない場合はランダム
+        if selected_hand is None:
+            selected_hand = random.choice(self.hands)
+            print(f"  No selection - Random: {selected_hand}")
+            self.buttons.stop_all_blinks()
 
-        time.sleep(0.5)
+        # 残り時間を待機（5秒経過まで）
+        elapsed = time.time() - start_time
+        if elapsed < 5.0:
+            wait_time = 5.0 - elapsed
+            print(f"  Waiting {wait_time:.1f}s before result...")
+            time.sleep(wait_time)
 
         return selected_hand
 
@@ -187,19 +196,16 @@ class JankenGame:
                 # 1. スタート待機
                 self.wait_for_start()
 
-                # 2. カウントダウン + SELECT表示
-                self.countdown_with_choice_prompt()
+                # 2. カウントダウン + 手選択（統合・5秒）
+                player_hand = self.countdown_and_selection()
 
-                # 3. プレイヤー手選択
-                player_hand = self.player_selection()
-
-                # 4. CPU手選択
+                # 3. CPU手選択
                 cpu_hand = self.cpu_selection()
 
-                # 5. 勝敗判定
+                # 4. 勝敗判定
                 result = self.judge(player_hand, cpu_hand)
 
-                # 6. 結果表示
+                # 5. 結果表示
                 self.show_result(player_hand, cpu_hand, result)
 
                 # 7. 次のゲームへ（自動リセット）
