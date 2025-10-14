@@ -19,7 +19,7 @@ class JankenGame:
         self.win_streak = 0  # 連勝カウンター
 
     def wait_for_start(self):
-        """スタート待機状態"""
+        """スタート待機状態（隠しコマンド対応）"""
         print("=== Waiting for START button ===")
 
         # ディスプレイ: PUSH START
@@ -33,8 +33,50 @@ class JankenGame:
         self.buttons.set_led('yellow', False)
         self.buttons.set_led('blue', False)
 
-        # スタートボタンが押されるまで待機
-        self.buttons.wait_for_button('start')
+        # 隠しコマンドシーケンス: 赤→黄→青→青→黄→赤
+        secret_sequence = ['red', 'yellow', 'blue', 'blue', 'yellow', 'red']
+        input_sequence = []
+        last_button_time = time.time()
+
+        # スタートボタンが押されるまで待機（隠しコマンドチェック付き）
+        while True:
+            # タイムアウト: 5秒間入力がなければシーケンスリセット
+            if time.time() - last_button_time > 5.0:
+                if len(input_sequence) > 0:
+                    print("  Secret sequence timeout - reset")
+                    input_sequence = []
+
+            # スタートボタンチェック
+            if self.buttons.is_button_pressed('start'):
+                break
+
+            # 隠しコマンドボタンチェック
+            for button in ['red', 'yellow', 'blue']:
+                if self.buttons.is_button_pressed(button):
+                    input_sequence.append(button)
+                    last_button_time = time.time()
+                    print(f"  Secret input: {button} (sequence: {len(input_sequence)}/6)")
+
+                    # シーケンス確認
+                    if input_sequence == secret_sequence:
+                        print("  SECRET COMMAND ACTIVATED!")
+                        self.show_secret_easter_egg()
+                        input_sequence = []
+                        # スタート画面に戻る
+                        self.display.show_push_start()
+                    elif len(input_sequence) >= len(secret_sequence):
+                        # シーケンスが長すぎる場合はリセット
+                        print("  Wrong sequence - reset")
+                        input_sequence = []
+                    elif input_sequence != secret_sequence[:len(input_sequence)]:
+                        # 途中で間違った場合もリセット
+                        print("  Wrong button - reset")
+                        input_sequence = []
+
+                    time.sleep(0.3)  # チャタリング防止
+                    break
+
+            time.sleep(0.05)
 
         # スタートボタンLED点灯に切り替え
         self.buttons.stop_blink('start')
@@ -44,6 +86,45 @@ class JankenGame:
 
         # スタートボタンLED消灯
         self.buttons.set_led('start', False)
+
+    def show_secret_easter_egg(self):
+        """隠しメッセージ演出"""
+        print("=== EASTER EGG ===")
+
+        # スタートボタン点滅停止
+        self.buttons.stop_blink('start')
+
+        # 全LEDレインボー演出
+        colors = [
+            ('red', True, False, False),
+            ('yellow', False, True, False),
+            ('blue', False, False, True),
+            ('all', True, True, True)
+        ]
+
+        for _ in range(3):
+            for name, r, y, b in colors:
+                self.buttons.set_led('red', r)
+                self.buttons.set_led('yellow', y)
+                self.buttons.set_led('blue', b)
+                time.sleep(0.15)
+
+        # 隠しメッセージ表示
+        self.display.show_secret_message()
+
+        # 全LED点灯
+        self.buttons.set_led('red', True)
+        self.buttons.set_led('yellow', True)
+        self.buttons.set_led('blue', True)
+        self.buttons.set_led('start', True)
+
+        time.sleep(3)
+
+        # LED消灯
+        self.buttons.all_leds_off()
+
+        # スタートボタン点滅再開
+        self.buttons.start_blink('start', interval=0.5)
 
     def countdown_and_selection(self):
         """
@@ -205,7 +286,7 @@ class JankenGame:
 
         # 対決画面表示
         self.display.show_vs_screen(player_hand, cpu_hand)
-        time.sleep(2)
+        time.sleep(1.5)
 
         # 結果表示（連勝数付き）
         self.display.show_result(result, self.win_streak)
@@ -213,31 +294,31 @@ class JankenGame:
         # LED演出
         if result == 'win':
             # 勝利: 全LED点滅
-            for _ in range(5):
+            for _ in range(4):
                 self.buttons.all_leds_on()
-                time.sleep(0.2)
+                time.sleep(0.15)
                 self.buttons.all_leds_off()
-                time.sleep(0.2)
+                time.sleep(0.15)
         elif result == 'lose':
             # 敗北: スタートボタンのみ点滅
             for _ in range(3):
                 self.buttons.set_led('start', True)
-                time.sleep(0.3)
+                time.sleep(0.25)
                 self.buttons.set_led('start', False)
-                time.sleep(0.3)
+                time.sleep(0.25)
         else:
             # 引き分け: 選択ボタン同時点滅
             for _ in range(3):
                 self.buttons.set_led('red', True)
                 self.buttons.set_led('yellow', True)
                 self.buttons.set_led('blue', True)
-                time.sleep(0.3)
+                time.sleep(0.25)
                 self.buttons.set_led('red', False)
                 self.buttons.set_led('yellow', False)
                 self.buttons.set_led('blue', False)
-                time.sleep(0.3)
+                time.sleep(0.25)
 
-        time.sleep(2)
+        time.sleep(1)
 
     def run_game_loop(self):
         """ゲームループ（連勝システム対応）"""
@@ -277,10 +358,10 @@ class JankenGame:
                         # 負けた場合：リセットしてスタート画面へ
                         print("=== Lose - Reset ===\n")
                         self.win_streak = 0
-                        time.sleep(2)
+                        # LED演出とshow_result最後の待機時間を含めて既に時間が経過しているのでそのまま遷移
                         break
-                    elif result == 'win' or result == 'draw':
-                        # 勝ち or あいこ：続行確認
+                    elif result == 'win':
+                        # 勝った場合：続行確認
                         if self.ask_continue():
                             # 続行
                             continue
@@ -288,6 +369,23 @@ class JankenGame:
                             # タイムアウト：リセット
                             print("=== Timeout - Reset ===\n")
                             self.win_streak = 0
+                            break
+                    elif result == 'draw':
+                        # あいこの場合
+                        if self.win_streak > 0:
+                            # 連勝中：続行確認
+                            if self.ask_continue():
+                                # 続行
+                                continue
+                            else:
+                                # タイムアウト：リセット
+                                print("=== Timeout - Reset ===\n")
+                                self.win_streak = 0
+                                break
+                        else:
+                            # 連勝していない：直接スタート画面へ
+                            print("=== Draw - Return to Start ===\n")
+                            # LED演出とshow_result最後の待機時間を含めて既に時間が経過しているのでそのまま遷移
                             break
 
         except KeyboardInterrupt:

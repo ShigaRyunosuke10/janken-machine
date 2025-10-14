@@ -217,20 +217,27 @@ class MatrixDisplay:
         """
         countdown_str = str(countdown)
         if win_streak > 0:
-            # 連勝中: 上画面に連勝数、下画面に「つづきを やる？」とカウントダウン
+            # 連勝中: 4行レイアウト（均等配置）
+            # 1行目: 連勝中 (y=8)
+            # 2行目: つづきを (y=22)
+            # 3行目: やる？ (y=36)
+            # 4行目: カウントダウン (y=50)
             streak_text = f"{win_streak}連勝中"
             self.draw_multiline_text([
-                (streak_text, 12, 10, self.COLOR_YELLOW),
-                ("つづきを", 6, 32, self.COLOR_WHITE),
-                ("やる？", 10, 44, self.COLOR_WHITE),
-                (countdown_str, 52, 32, self.COLOR_CYAN)
+                (streak_text, 8, 8, self.COLOR_YELLOW),
+                ("つづきを", 8, 22, self.COLOR_WHITE),
+                ("やる？", 12, 36, self.COLOR_WHITE),
+                (countdown_str, 28, 50, self.COLOR_YELLOW)
             ])
         else:
-            # 通常: 上画面下行に「つづきを」、下画面上行に「やる？」とカウントダウン
+            # あいこの場合: 3行レイアウト（均等配置）
+            # 1行目: つづきを (y=14)
+            # 2行目: やる？ (y=28)
+            # 3行目: カウントダウン (y=44)
             self.draw_multiline_text([
-                ("つづきを", 6, 19, self.COLOR_WHITE),
-                ("やる？", 10, 32, self.COLOR_WHITE),
-                (countdown_str, 52, 32, self.COLOR_CYAN)
+                ("つづきを", 6, 14, self.COLOR_WHITE),
+                ("やる？", 10, 28, self.COLOR_WHITE),
+                (countdown_str, 28, 44, self.COLOR_YELLOW)
             ])
 
     def show_vs_screen(self, player_hand: str, cpu_hand: str):
@@ -261,6 +268,15 @@ class MatrixDisplay:
             (player_text, player_x, 19, self.COLOR_WHITE),
             ("わたし", 14, 32, self.COLOR_MAGENTA),
             (cpu_text, cpu_x, 45, self.COLOR_WHITE)
+        ])
+
+    def show_secret_message(self):
+        """隠しメッセージ表示（イースターエッグ）"""
+        self.draw_multiline_text([
+            ("じゃんけん", 2, 6, self.COLOR_YELLOW),
+            ("マスター！", 2, 20, self.COLOR_YELLOW),
+            ("Made by", 10, 36, self.COLOR_CYAN),
+            ("Claude", 14, 50, self.COLOR_CYAN)
         ])
 
     def fill_color(self, r: int, g: int, b: int):
