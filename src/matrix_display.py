@@ -8,6 +8,7 @@ PILのデフォルトフォント + SetImage() 方式でちらつきなし
 
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
 from PIL import Image, ImageDraw, ImageFont
+import random
 import time
 
 class MatrixDisplay:
@@ -265,6 +266,70 @@ class MatrixDisplay:
             ("わたし", 14, 32, self.COLOR_MAGENTA),
             (cpu_text, self._hand_x(cpu_text), 45, self.COLOR_WHITE)
         ])
+
+    def show_new_record(self, streak: int):
+        """新記録達成画面
+
+        Args:
+            streak: 更新した連勝数
+        """
+        self.draw_multiline_text([
+            ("しんきろく", 2, 14, self.COLOR_MAGENTA),
+            (f"{streak}連勝", 14, 28, self.COLOR_YELLOW),
+            ("たっせい！", 2, 44, self.COLOR_WHITE)
+        ])
+
+    def show_best_record(self, streak: int):
+        """最高記録表示画面（スタート待機中に交互表示）
+
+        Args:
+            streak: 最高連勝数
+        """
+        self.draw_multiline_text([
+            ("さいこう", 8, 14, self.COLOR_YELLOW),
+            ("きろく", 14, 28, self.COLOR_YELLOW),
+            (f"{streak}連勝", 14, 44, self.COLOR_CYAN)
+        ])
+
+    def show_reset_countdown(self, remaining: int):
+        """記録リセットまでのカウントダウン（スタートボタン長押し中の隠し操作）
+
+        Args:
+            remaining: リセット実行までの残り秒数
+        """
+        self.draw_multiline_text([
+            ("きろく", 14, 14, self.COLOR_RED),
+            ("リセット", 8, 28, self.COLOR_RED),
+            (str(remaining), 28, 44, self.COLOR_YELLOW)
+        ])
+
+    def show_record_reset(self):
+        """記録リセット完了画面"""
+        self.draw_multiline_text([
+            ("きろくを", 8, 14, self.COLOR_RED),
+            ("リセット", 8, 28, self.COLOR_WHITE),
+            ("しました", 8, 44, self.COLOR_WHITE)
+        ])
+
+    def show_win_sparkle(self, duration: float = 1.2):
+        """勝利演出: 画面全体にカラフルな紙吹雪がきらめく
+
+        Args:
+            duration: 演出時間（秒）
+        """
+        colors = [
+            self.COLOR_RED, self.COLOR_YELLOW, self.COLOR_GREEN,
+            self.COLOR_CYAN, self.COLOR_MAGENTA, self.COLOR_WHITE
+        ]
+        frame_time = 0.1
+        for _ in range(int(duration / frame_time)):
+            image = self._create_image()
+            for _ in range(120):
+                x = random.randint(0, self.matrix.width - 1)
+                y = random.randint(0, self.matrix.height - 1)
+                image.putpixel((x, y), random.choice(colors))
+            self._display_image(image)
+            time.sleep(frame_time)
 
     def show_secret_message(self):
         """隠しメッセージ表示（イースターエッグ）"""

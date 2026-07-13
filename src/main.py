@@ -4,10 +4,15 @@
 Raspberry Pi 4B + LED Matrix + Buttons
 """
 
+import json
 import random
 import time
+from pathlib import Path
 from button_controller import ButtonController
 from matrix_display import MatrixDisplay
+
+# 最高連勝記録の保存先（git管理外、電源を切っても残る）
+RECORD_FILE = Path(__file__).resolve().parent.parent / 'data' / 'records.json'
 
 class JankenGame:
     """じゃんけんゲームのメインロジック"""
@@ -24,6 +29,61 @@ class JankenGame:
         self.display = MatrixDisplay()
         self.hands = ['rock', 'scissors', 'paper']
         self.win_streak = 0  # 連勝カウンター
+        self.best_streak = self._load_best_streak()  # 最高連勝記録
+
+    def _load_best_streak(self) -> int:
+        """最高連勝記録をファイルから読み込む（なければ0）"""
+        try:
+            with open(RECORD_FILE, encoding='utf-8') as f:
+                return int(json.load(f).get('best_streak', 0))
+        except (OSError, ValueError):
+            return 0
+
+    def _save_best_streak(self):
+        """最高連勝記録をファイルに保存する"""
+        try:
+            RECORD_FILE.parent.mkdir(exist_ok=True)
+            with open(RECORD_FILE, 'w', encoding='utf-8') as f:
+                json.dump({'best_streak': self.best_streak}, f)
+        except OSError as e:
+            print(f"Warning: could not save record: {e}")
+
+    RESET_HOLD_SECONDS = 10.0  # スタートボタン長押しで記録リセットするまでの秒数
+
+    def _handle_start_press(self) -> str:
+        """スタートボタン押下の処理（長押し10秒で最高記録リセットの隠し操作）
+
+        Returns:
+            'game'=通常押し（ゲーム開始）, 'reset'=記録リセット実行
+        """
+        hold_start = time.time()
+        last_shown = None
+
+        while self.buttons.is_button_pressed('start'):
+            held = time.time() - hold_start
+
+            if held >= self.RESET_HOLD_SECONDS:
+                # リセット実行
+                self.best_streak = 0
+                self._save_best_streak()
+                print("BEST RECORD RESET (hidden long-press)")
+                self.display.show_record_reset()
+                # ボタンが離されるまで待ってから画面を2秒見せる
+                while self.buttons.is_button_pressed('start'):
+                    time.sleep(0.05)
+                time.sleep(2)
+                return 'reset'
+
+            if held >= 2.0:
+                # 2秒以上の長押し中はリセットまでの残り秒数を表示
+                remaining = int(self.RESET_HOLD_SECONDS - held) + 1
+                if remaining != last_shown:
+                    self.display.show_reset_countdown(remaining)
+                    last_shown = remaining
+
+            time.sleep(0.05)
+
+        return 'game'
 
     def wait_for_start(self):
         """スタート待機状態（隠しコマンド対応）"""
@@ -45,17 +105,34 @@ class JankenGame:
         input_sequence = []
         last_button_time = time.time()
 
+        # スタート画面と最高記録の交互表示用
+        last_toggle_time = time.time()
+        showing_record = False
+
         # スタートボタンが押されるまで待機（隠しコマンドチェック付き）
         while True:
+            # 記録があればスタート画面と最高記録を4秒ごとに交互表示
+            if self.best_streak > 0 and time.time() - last_toggle_time > 4.0:
+                showing_record = not showing_record
+                if showing_record:
+                    self.display.show_best_record(self.best_streak)
+                else:
+                    self.display.show_push_start()
+                last_toggle_time = time.time()
             # タイムアウト: 5秒間入力がなければシーケンスリセット
             if time.time() - last_button_time > 5.0:
                 if len(input_sequence) > 0:
                     print("  Secret sequence timeout - reset")
                     input_sequence = []
 
-            # スタートボタンチェック
+            # スタートボタンチェック（10秒長押しで最高記録リセット）
             if self.buttons.is_button_pressed('start'):
-                break
+                if self._handle_start_press() == 'game':
+                    break
+                # リセット実行後はスタート画面に戻って待機を続ける
+                self.display.show_push_start()
+                showing_record = False
+                last_toggle_time = time.time()
 
             # 隠しコマンドボタンチェック
             for button in ['red', 'yellow', 'blue']:
@@ -71,6 +148,8 @@ class JankenGame:
                         input_sequence = []
                         # スタート画面に戻る
                         self.display.show_push_start()
+                        showing_record = False
+                        last_toggle_time = time.time()
                     elif len(input_sequence) >= len(secret_sequence):
                         # シーケンスが長すぎる場合はリセット
                         print("  Wrong sequence - reset")
@@ -280,6 +359,10 @@ class JankenGame:
         self.display.show_vs_screen(player_hand, cpu_hand)
         time.sleep(1.5)
 
+        # 勝利時は紙吹雪演出を挟む
+        if result == 'win':
+            self.display.show_win_sparkle()
+
         # 結果表示（連勝数付き）
         self.display.show_result(result, self.win_streak)
 
@@ -344,6 +427,14 @@ class JankenGame:
                         print(f"Win! Streak: {self.win_streak}")
 
                     self.show_result(player_hand, cpu_hand, result)
+
+                    # 最高記録を更新したら祝福画面
+                    if result == 'win' and self.win_streak > self.best_streak:
+                        self.best_streak = self.win_streak
+                        self._save_best_streak()
+                        print(f"NEW RECORD: {self.best_streak} wins!")
+                        self.display.show_new_record(self.best_streak)
+                        time.sleep(2.5)
 
                     # 6. 続行判定
                     if result == 'lose':
