@@ -13,6 +13,13 @@ import time
 class MatrixDisplay:
     """LEDマトリックス表示を管理するクラス"""
 
+    # 手の表示テキスト
+    HAND_TEXT = {
+        'rock': 'グー',
+        'scissors': 'チョキ',
+        'paper': 'パー',
+    }
+
     def __init__(self):
         # マトリックス設定（test_display_long.pyで動作確認済み）
         options = RGBMatrixOptions()
@@ -63,6 +70,11 @@ class MatrixDisplay:
     def _display_image(self, image):
         """PIL ImageをLEDマトリックスに表示"""
         self.matrix.SetImage(image.convert('RGB'))
+
+    @staticmethod
+    def _hand_x(hand_text: str) -> int:
+        """手の表示X座標（3文字の「チョキ」のみ左寄せで中央揃えにする）"""
+        return 14 if hand_text == "チョキ" else 20
 
     def draw_text(self, text: str, x: int, y: int, color):
         """
@@ -149,14 +161,15 @@ class MatrixDisplay:
             hand: 'rock', 'scissors', 'paper'
             is_player: True=プレイヤー, False=CPU
         """
-        hand_map = {
-            'rock': ("グー", self.COLOR_RED),
-            'scissors': ("チョキ", self.COLOR_YELLOW),
-            'paper': ("パー", self.COLOR_BLUE)
+        hand_colors = {
+            'rock': self.COLOR_RED,
+            'scissors': self.COLOR_YELLOW,
+            'paper': self.COLOR_BLUE,
         }
 
-        if hand in hand_map:
-            text, color = hand_map[hand]
+        if hand in self.HAND_TEXT:
+            text = self.HAND_TEXT[hand]
+            color = hand_colors[hand]
             if is_player:
                 label = "あなた"
                 label_color = self.COLOR_CYAN
@@ -164,15 +177,9 @@ class MatrixDisplay:
                 label = "わたし"
                 label_color = self.COLOR_MAGENTA
 
-            # 手の位置: グー・パー(2文字)は x=20、チョキ(3文字)は x=14 で「あなた」と揃える
-            if text == "チョキ":
-                hand_x = 14
-            else:
-                hand_x = 20
-
             self.draw_multiline_text([
                 (label, 14, 8, label_color),
-                (text, hand_x, 42, color)
+                (text, self._hand_x(text), 42, color)
             ])
 
     def show_result(self, result: str, win_streak: int = 0):
@@ -248,26 +255,15 @@ class MatrixDisplay:
             player_hand: 'rock', 'scissors', 'paper'
             cpu_hand: 'rock', 'scissors', 'paper'
         """
-        hand_map = {
-            'rock': 'グー',
-            'scissors': 'チョキ',
-            'paper': 'パー'
-        }
-
-        player_text = hand_map.get(player_hand, '???')
-        cpu_text = hand_map.get(cpu_hand, '???')
-
-        # プレイヤーの手の位置: チョキは x=14、グー・パーは x=20
-        player_x = 14 if player_text == "チョキ" else 20
-        # CPUの手の位置: チョキは x=14、グー・パーは x=20
-        cpu_x = 14 if cpu_text == "チョキ" else 20
+        player_text = self.HAND_TEXT.get(player_hand, '???')
+        cpu_text = self.HAND_TEXT.get(cpu_hand, '???')
 
         # 上画面に「あなた」とプレイヤーの手、下画面に「わたし」とCPUの手
         self.draw_multiline_text([
             ("あなた", 14, 6, self.COLOR_CYAN),
-            (player_text, player_x, 19, self.COLOR_WHITE),
+            (player_text, self._hand_x(player_text), 19, self.COLOR_WHITE),
             ("わたし", 14, 32, self.COLOR_MAGENTA),
-            (cpu_text, cpu_x, 45, self.COLOR_WHITE)
+            (cpu_text, self._hand_x(cpu_text), 45, self.COLOR_WHITE)
         ])
 
     def show_secret_message(self):

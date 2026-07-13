@@ -12,6 +12,13 @@ from matrix_display import MatrixDisplay
 class JankenGame:
     """じゃんけんゲームのメインロジック"""
 
+    # ボタンと手の対応
+    BUTTON_TO_HAND = {
+        'red': 'rock',
+        'yellow': 'scissors',
+        'blue': 'paper',
+    }
+
     def __init__(self):
         self.buttons = ButtonController()
         self.display = MatrixDisplay()
@@ -155,33 +162,18 @@ class JankenGame:
             # 1秒間ボタン入力をチェック
             while time.time() - count_start < 1.0:
                 if selected_hand is None:
-                    if self.buttons.is_button_pressed('red'):
-                        selected_hand = 'rock'
-                        print(f"  Player selected: {selected_hand}")
-                        # チェイス点滅を停止して選択ボタンのみ点灯
-                        self.buttons.stop_all_blinks()
-                        time.sleep(0.1)  # 停止処理が完了するまで待機
-                        self.buttons.set_led('red', True)
-                        self.buttons.set_led('yellow', False)
-                        self.buttons.set_led('blue', False)
-                        break  # すぐにループを抜ける
-                    elif self.buttons.is_button_pressed('yellow'):
-                        selected_hand = 'scissors'
-                        print(f"  Player selected: {selected_hand}")
-                        self.buttons.stop_all_blinks()
-                        time.sleep(0.1)
-                        self.buttons.set_led('red', False)
-                        self.buttons.set_led('yellow', True)
-                        self.buttons.set_led('blue', False)
-                        break  # すぐにループを抜ける
-                    elif self.buttons.is_button_pressed('blue'):
-                        selected_hand = 'paper'
-                        print(f"  Player selected: {selected_hand}")
-                        self.buttons.stop_all_blinks()
-                        time.sleep(0.1)
-                        self.buttons.set_led('red', False)
-                        self.buttons.set_led('yellow', False)
-                        self.buttons.set_led('blue', True)
+                    for button, hand in self.BUTTON_TO_HAND.items():
+                        if self.buttons.is_button_pressed(button):
+                            selected_hand = hand
+                            print(f"  Player selected: {selected_hand}")
+                            # 点滅を停止して選択ボタンのみ点灯
+                            self.buttons.stop_all_blinks()
+                            time.sleep(0.1)  # 停止処理が完了するまで待機
+                            for name in self.BUTTON_TO_HAND:
+                                self.buttons.set_led(name, name == button)
+                            break
+
+                    if selected_hand is not None:
                         break  # すぐにループを抜ける
 
                 time.sleep(0.05)

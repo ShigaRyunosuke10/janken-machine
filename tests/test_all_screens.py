@@ -6,7 +6,8 @@
 
 import sys
 import time
-sys.path.insert(0, '/home/janken/janken-machine/src')
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'src'))
 
 from matrix_display import MatrixDisplay
 

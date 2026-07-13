@@ -41,17 +41,20 @@ Raspberry Pi 4BとRGB LEDマトリックス、ボタンを使用したイベン�
 
 ### ゲームフロー
 
-1. **スタート待機**: 「PUSH START」表示、スタートボタンLED点滅
-2. **カウントダウン**: 3, 2, 1のカウントダウン表示
-3. **手選択**: プレイヤーが赤/黄/青ボタンで手を選択（選択ボタンLED点滅）
-4. **CPU選択**: CPUがランダムに手を選択
-5. **勝敗判定**: 勝敗を自動判定
-6. **結果表示**: 対決画面 → 勝敗表示、LED演出
-7. **自動リセット**: 3秒後に次のゲームへ
+1. **スタート待機**: 「スタートをおしてね」表示、スタートボタンLED点滅
+2. **カウントダウン + 手選択**: 5秒のカウントダウン中に赤/黄/青ボタンで手を選択（時間切れでスタート画面に戻る）
+3. **CPU選択**: CPUがランダムに手を選択
+4. **勝敗判定・結果表示**: 対決画面 → 勝敗表示、LED演出
+5. **連勝システム**: 勝つと連勝数を表示。「つづきをやる？」で5秒以内にスタートボタンを押すと連勝継続
+6. **リセット**: 負け・タイムアウトで連勝リセットしスタート画面へ
+
+さらに、スタート待機中の隠しコマンドでイースターエッグが発動します。
+
+詳細仕様: [docs/GAME_SPEC.md](docs/GAME_SPEC.md)
 
 ### LED演出
 
-- **勝利**: 全LED点滅（5回）
+- **勝利**: 全LED点滅（4回）
 - **敗北**: スタートボタンLED点滅（3回）
 - **引き分け**: 選択ボタンLED同時点滅（3回）
 
@@ -117,15 +120,23 @@ sudo python3 ~/janken-machine/src/main.py
 
 ### テストプログラム
 
+Raspberry Pi実機上で実行する動作確認スクリプトです。
+
 ```bash
 # ボタン入力テスト
-python3 ~/janken-machine/src/test_button_input.py
+python3 ~/janken-machine/tests/test_button_input.py
 
 # ボタンLED出力テスト
-sudo python3 ~/janken-machine/src/test_button_led.py
+sudo python3 ~/janken-machine/tests/test_button_led.py
 
 # LEDマトリックス表示テスト
-sudo python3 ~/janken-machine/src/test_matrix_display.py
+sudo python3 ~/janken-machine/tests/test_matrix_display.py
+
+# 全画面表示テスト
+sudo python3 ~/janken-machine/tests/test_all_screens.py
+
+# ゲームフロー自動テスト（ボタン入力なし）
+sudo python3 ~/janken-machine/tests/test_game_flow.py
 ```
 
 ### サービス管理
@@ -148,11 +159,16 @@ janken-machine/
 ├── src/
 │   ├── main.py                    # メインゲームロジック
 │   ├── button_controller.py       # ボタン・LED制御モジュール
-│   ├── matrix_display.py          # LEDマトリックス表示モジュール
+│   └── matrix_display.py          # LEDマトリックス表示モジュール
+├── tests/
 │   ├── test_button_input.py       # ボタン入力テスト
 │   ├── test_button_led.py         # ボタンLED出力テスト
-│   └── test_matrix_display.py     # LEDマトリックス表示テスト
+│   ├── test_matrix_display.py     # LEDマトリックス表示テスト
+│   ├── test_all_screens.py        # 全画面表示テスト
+│   ├── test_game_flow.py          # ゲームフロー自動テスト
+│   └── test_font_offset.py        # フォント描画オフセット調査ツール
 ├── docs/
+│   ├── GAME_SPEC.md               # ゲーム仕様書
 │   ├── SETUP.md                   # 環境構築手順（完全版）
 │   ├── SD_CARD_SETUP.md           # SDカード書き込み手順
 │   └── REMOTE_DEVELOPMENT.md      # リモート開発手順
@@ -160,6 +176,7 @@ janken-machine/
 │   ├── requirements.md            # 要件定義書
 │   └── gpio_pinout.md             # GPIO配置仕様
 ├── janken-machine.service         # systemdサービスファイル
+├── CLAUDE.md                      # Claude Code用プロジェクト設定
 └── README.md                      # このファイル
 ```
 

@@ -7,14 +7,15 @@ LEDマトリックス表示テストプログラム
 from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
 import time
 
-# マトリックス設定
+# マトリックス設定（src/matrix_display.py と同じ動作確認済み設定）
 options = RGBMatrixOptions()
-options.rows = 32              # 1パネルの行数
-options.cols = 64              # 1パネルの列数
-options.chain_length = 2       # 縦に2枚連結
-options.parallel = 1           # 並列接続数
+options.rows = 32                          # 1パネルの行数
+options.cols = 64                          # 1パネルの列数
+options.chain_length = 1
+options.parallel = 2                       # 2枚を並列接続（縦方向64x64）
 options.hardware_mapping = 'regular'
-options.gpio_slowdown = 4      # Raspberry Pi 4対応
+options.disable_hardware_pulsing = True    # ソフトウェアパルス（重要）
+options.gpio_slowdown = 5                  # タイミング調整（重要）
 
 # マトリックス初期化
 matrix = RGBMatrix(options=options)

@@ -23,16 +23,20 @@ class ButtonController:
 
     def __init__(self):
         # ボタン初期化
-        self.button_start = Button(PIN_START, pull_up=True)
-        self.button_red = Button(PIN_RED, pull_up=True)
-        self.button_yellow = Button(PIN_YELLOW, pull_up=True)
-        self.button_blue = Button(PIN_BLUE, pull_up=True)
+        self.buttons = {
+            'start': Button(PIN_START, pull_up=True),
+            'red': Button(PIN_RED, pull_up=True),
+            'yellow': Button(PIN_YELLOW, pull_up=True),
+            'blue': Button(PIN_BLUE, pull_up=True),
+        }
 
-        # LED初期化（active_low=True で点灯・消灯を反転）
-        self.led_start = LED(PIN_START_LED, active_high=False)
-        self.led_red = LED(PIN_RED_LED, active_high=False)
-        self.led_yellow = LED(PIN_YELLOW_LED, active_high=False)
-        self.led_blue = LED(PIN_BLUE_LED, active_high=False)
+        # LED初期化（active_high=False で点灯・消灯を反転）
+        self.leds = {
+            'start': LED(PIN_START_LED, active_high=False),
+            'red': LED(PIN_RED_LED, active_high=False),
+            'yellow': LED(PIN_YELLOW_LED, active_high=False),
+            'blue': LED(PIN_BLUE_LED, active_high=False),
+        }
 
         # 点滅制御用
         self._blink_threads = {}
@@ -46,18 +50,11 @@ class ButtonController:
             led_name: 'start', 'red', 'yellow', 'blue'
             state: True=点灯, False=消灯
         """
-        led_map = {
-            'start': self.led_start,
-            'red': self.led_red,
-            'yellow': self.led_yellow,
-            'blue': self.led_blue
-        }
-
-        if led_name in led_map:
+        if led_name in self.leds:
             if state:
-                led_map[led_name].on()
+                self.leds[led_name].on()
             else:
-                led_map[led_name].off()
+                self.leds[led_name].off()
 
     def start_blink(self, led_name: str, interval: float = 0.5):
         """
@@ -161,18 +158,14 @@ class ButtonController:
     def all_leds_off(self):
         """全LED消灯"""
         self.stop_all_blinks()
-        self.led_start.off()
-        self.led_red.off()
-        self.led_yellow.off()
-        self.led_blue.off()
+        for led in self.leds.values():
+            led.off()
 
     def all_leds_on(self):
         """全LED点灯"""
         self.stop_all_blinks()
-        self.led_start.on()
-        self.led_red.on()
-        self.led_yellow.on()
-        self.led_blue.on()
+        for led in self.leds.values():
+            led.on()
 
     def is_button_pressed(self, button_name: str) -> bool:
         """
@@ -184,15 +177,8 @@ class ButtonController:
         Returns:
             True=押されている, False=押されていない
         """
-        button_map = {
-            'start': self.button_start,
-            'red': self.button_red,
-            'yellow': self.button_yellow,
-            'blue': self.button_blue
-        }
-
-        if button_name in button_map:
-            return button_map[button_name].is_pressed
+        if button_name in self.buttons:
+            return self.buttons[button_name].is_pressed
 
         return False
 
@@ -207,17 +193,10 @@ class ButtonController:
         Returns:
             True=ボタンが押された, False=タイムアウト
         """
-        button_map = {
-            'start': self.button_start,
-            'red': self.button_red,
-            'yellow': self.button_yellow,
-            'blue': self.button_blue
-        }
-
-        if button_name not in button_map:
+        if button_name not in self.buttons:
             return False
 
-        button = button_map[button_name]
+        button = self.buttons[button_name]
 
         if timeout is None:
             button.wait_for_press()
