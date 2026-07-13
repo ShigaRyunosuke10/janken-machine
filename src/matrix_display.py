@@ -114,8 +114,8 @@ class MatrixDisplay:
     def show_push_start(self):
         """「じゃんけんゲーム スタートを押してね」表示"""
         self.draw_multiline_text([
-            ("じゃんけん", 2, 4, self.COLOR_GREEN),
-            ("ゲーム", 16, 18, self.COLOR_GREEN),
+            ("じゃんけん", 2, 4, self.COLOR_MAGENTA),
+            ("ゲーム", 16, 18, self.COLOR_MAGENTA),
             ("スタートを", 2, 36, self.COLOR_CYAN),
             ("おしてね", 8, 50, self.COLOR_CYAN)
         ])
