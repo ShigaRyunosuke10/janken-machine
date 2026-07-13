@@ -52,6 +52,13 @@ Raspberry Pi 4BとRGB LEDマトリックス、ボタンを使用したイベン�
 
 詳細仕様: [docs/GAME_SPEC.md](docs/GAME_SPEC.md)
 
+### AI改造ワークショップ
+
+このマシンは、子どもたちが **AIに日本語で指示を出してその場で機能追加する** ワークショップ機材としても使っています。「言葉で伝える → AIがコードを書く → 数十秒でマシンが変わる」を体験できます。
+
+- 進行ガイド・お題メニュー: [docs/WORKSHOP.md](docs/WORKSHOP.md)
+- みんなが作った機能の記録: [docs/WORKSHOP_LOG.md](docs/WORKSHOP_LOG.md)
+
 ### LED演出
 
 - **勝利**: 全LED点滅（4回）
