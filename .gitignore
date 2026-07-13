@@ -28,6 +28,9 @@ Thumbs.db
 *.log
 logs/
 
+# Game data (最高記録など、実機ローカルの記録)
+data/
+
 # Temporary files
 tmp/
 temp/
