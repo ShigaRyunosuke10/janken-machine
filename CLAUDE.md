@@ -33,7 +33,8 @@ tests/                    # Raspberry Pi実機で実行する動作確認スク�
 └── test_font_offset.py   # フォント描画オフセット調査ツール
 scripts/
 ├── deploy.sh             # 変更を実機に即反映（scp+再起動、コミット不要）
-└── restore.sh            # 実機をGitHub mainの安定版に即復旧
+├── restore.sh            # 実機を保存済みの安定版に即復旧
+└── save.sh               # いまの状態を安定版として保存（Pi内部git、GitHub不要）
 docs/                     # セットアップ・運用手順・ワークショップ資料
 reference/                # 要件定義・GPIOピン配置
 ```
@@ -74,8 +75,10 @@ sudo journalctl -u janken-machine.service -f
 1. **子どもの発案をそのまま聞く**。曖昧なら「どんな色?」「何秒?」と簡単な質問で具体化する（大人向けの選択肢羅列はしない）
 2. **小さく実装 → `bash scripts/deploy.sh` で即反映**（数秒で実機に出る。コミットはまだしない）
 3. マシンを見てもらい、気に入らなければその場で調整を繰り返す
-4. 動かなくなったら `bash scripts/restore.sh` で即復旧（GitHubのmainが常に安定版）
-5. **セッション終盤にまとめて**: 採用された変更をコミット&push（次回の安定版になる）+ [docs/WORKSHOP_LOG.md](docs/WORKSHOP_LOG.md) に「誰が・何を作ったか」を記録（広報素材）
+4. 動かなくなったら `bash scripts/restore.sh` で即復旧（Pi内部のgitに保存された安定版に戻る）
+5. **セッション終盤にまとめて**: 採用された状態で `bash scripts/save.sh "メモ"` を実行（Pi内部で安定版化、GitHub不要）+ [docs/WORKSHOP_LOG.md](docs/WORKSHOP_LOG.md) に「誰が・何を作ったか」を記録（広報素材）
+
+※ GitHubへのpushは必須ではない（バックアップしたい場合のみ任意で）。日常運用は deploy.sh / restore.sh / save.sh の3つで完結する。
 
 ルール:
 - 説明は中学生に伝わる言葉で。専門用語には一言の補足を付ける

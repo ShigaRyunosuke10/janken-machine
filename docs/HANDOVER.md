@@ -10,13 +10,14 @@
 
 ## 新PCのセットアップ手順
 
-### 1. リポジトリのクローン
+### 1. プロジェクトフォルダの入手
 
-```bash
-git clone https://github.com/ShigaRyunosuke10/janken-machine.git
-```
+前任者からプロジェクトフォルダのコピーをもらう（git履歴ごと入っている）。
+GitHubからのクローン（https://github.com/ShigaRyunosuke10/janken-machine）でも可。
 
-※ push するには GitHub リポジトリのコラボレータ権限が必要（前任者に招待してもらう）
+**GitHubのアカウントや権限は日常運用には不要**。開発は
+`deploy.sh`（反映）/ `restore.sh`（復旧）/ `save.sh`（安定版保存）の3スクリプトで完結する。
+GitHubへのpushはバックアップしたい場合の任意作業。
 
 ### 2. SSH鍵の作成とPiへの登録
 
@@ -47,8 +48,9 @@ bash scripts/deploy.sh             # 実機反映が動けば開発環境は完�
 
 ## 引き継ぎ時にやること（チェックリスト）
 
-- [ ] GitHubのコラボレータに後任者を追加（github.com のリポジトリ Settings → Collaborators）
+- [ ] プロジェクトフォルダ一式と `~/.ssh/id_ed25519`（+ .pub）を新PCにコピー
 - [ ] Piのユーザーパスワードを後任者に共有（不明なら Pi のコンソールで `sudo passwd janken` で再設定）
+- [ ] （任意・バックアップしたい場合のみ）GitHubのコラボレータに後任者を追加
 - [ ] 新PCで上記セットアップ（クローン・鍵登録・deploy.sh確認）
 - [ ] 旧PCの鍵を authorized_keys から削除
 - [ ] [docs/WORKSHOP.md](WORKSHOP.md)（イベント進行）と [CLAUDE.md](../CLAUDE.md)（運用ルール）を一読
